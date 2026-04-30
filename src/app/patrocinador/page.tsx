@@ -68,9 +68,6 @@ export default function PatrocinadorPage() {
         <div className="max-w-6xl mx-auto">
           {/* Hero */}
           <section className="text-center mb-12 md:mb-20">
-            <p className="font-sans text-[0.65rem] md:text-xs tracking-[0.3em] text-drumond-orange uppercase font-bold opacity-80 mb-3">
-              Drumond Sports Convida
-            </p>
             <h1 className="font-display text-4xl md:text-7xl text-white uppercase italic leading-tight mb-4">
               Seja um <span className="text-drumond-orange">Patrocinador</span>
             </h1>

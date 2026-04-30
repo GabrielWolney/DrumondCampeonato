@@ -41,12 +41,12 @@ export function ConfiguracoesTab() {
     }
   };
 
-  const handleImageUpload = async (key: "hero_title_image" | "hero_title_image_mobile" | "navbar_logo") => {
+  const handleImageUpload = async (key: "hero_title_image" | "hero_title_image_mobile" | "navbar_logo" | "navbar_logo_scrolled") => {
     const input = fileInputRefs.current[key];
     if (!input?.files?.[0]) return;
     setUploading(key);
     try {
-      const url = await compressAndUpload(input.files[0], "config", key === "navbar_logo" ? 400 : 1080);
+      const url = await compressAndUpload(input.files[0], "config", key === "navbar_logo" || key === "navbar_logo_scrolled" ? 400 : 1080);
       if (url) {
         updateConfig(key, url);
         showToast("Imagem carregada com sucesso!", "success");
@@ -93,6 +93,33 @@ export function ConfiguracoesTab() {
                     hidden
                     ref={(el) => { fileInputRefs.current.navbar_logo = el; }}
                     onChange={() => handleImageUpload("navbar_logo")}
+                  />
+                </label>
+              </div>
+            </div>
+
+            {/* Logo Navbar (Scroll) */}
+            <div className="bg-white/5 p-4 rounded-xl">
+              <label className="block text-sm font-bold text-gray-300 mb-2">Logo Navbar (Scroll)</label>
+              <div className="w-full h-20 relative rounded-lg overflow-hidden bg-gray-800 mb-2">
+                <Image src={config.navbar_logo_scrolled} alt="Logo Navbar Scroll" fill className="object-contain p-1" />
+              </div>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={config.navbar_logo_scrolled}
+                  onChange={(e) => handleChange("navbar_logo_scrolled", e.target.value)}
+                  className="flex-1 p-2 rounded-lg bg-black/30 border border-white/20 text-white text-xs"
+                  placeholder="URL da logo"
+                />
+                <label className="bg-drumond-orange text-black px-3 py-2 rounded-lg cursor-pointer text-xs font-bold flex items-center">
+                  {uploading === "navbar_logo_scrolled" ? "..." : "Upload"}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    hidden
+                    ref={(el) => { fileInputRefs.current.navbar_logo_scrolled = el; }}
+                    onChange={() => handleImageUpload("navbar_logo_scrolled")}
                   />
                 </label>
               </div>
@@ -215,10 +242,6 @@ export function ConfiguracoesTab() {
         <div className="md:col-span-2">
           <label className="block text-sm font-bold text-gray-300">Texto &quot;Sobre o Evento&quot;</label>
           <textarea rows={4} value={config.about_text} onChange={(e) => handleChange("about_text", e.target.value)} className="w-full p-2 rounded-lg bg-black/30 border border-white/20 text-white" />
-        </div>
-        <div>
-          <label className="block text-sm font-bold text-gray-300">Link &quot;Seja um Parceiro&quot;</label>
-          <input type="url" value={config.partner_link} onChange={(e) => handleChange("partner_link", e.target.value)} className="w-full p-2 rounded-lg bg-black/30 border border-white/20 text-white" />
         </div>
         <div className="md:col-span-2">
           <hr className="border-white/20 my-4" />

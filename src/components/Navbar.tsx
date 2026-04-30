@@ -42,7 +42,11 @@ export default function Navbar() {
     { name: "Patrocinador", path: "/patrocinador" },
   ];
 
-  const logoSrc = (!configLoading && config.navbar_logo) ? config.navbar_logo : "/logo-barra.png";
+  // Logo padrão (estado inicial)
+  const logoPadrao = (!configLoading && config.navbar_logo) ? config.navbar_logo : "";
+  // Logo de scroll (se definida, sobrescreve a padrão)
+  const logoScroll = (!configLoading && config.navbar_logo_scrolled) ? config.navbar_logo_scrolled : logoPadrao;
+  const logoSrc = isScrolled ? logoScroll : logoPadrao;
 
   return (
     <>
@@ -52,7 +56,6 @@ export default function Navbar() {
           "transition-all duration-500 ease-[cubic-bezier(0.2,0.8,0.2,1)]",
           isScrolled
             ? "bg-[#101820]/80 backdrop-blur-xl saturate-[180%] shadow-[0_12px_40px_-12px_rgba(0,0,0,0.8)] rounded-[30px] top-4 mx-auto max-w-[92%]"
-            // ↓↓↓ largura reduzida no estado inicial (desktop)
             : "bg-transparent w-full top-0 md:max-w-3xl md:mx-auto",
         ].join(" ")}
         style={{
@@ -63,15 +66,20 @@ export default function Navbar() {
         {!isScrolled && (
           <div className="flex flex-col items-center md:hidden">
             <Link href="/" className="mb-3">
-              <div className="relative h-10 w-40">
-                <Image
-                  src={logoSrc}
-                  alt="Drumond Sports"
-                  fill
-                  className="object-contain"
-                  priority
-                />
-              </div>
+              {logoSrc ? (
+                <div className="relative h-10 w-40">
+                  <Image
+                    src={logoSrc}
+                    alt="Drumond Sports"
+                    fill
+                    className="object-contain"
+                    sizes="160px"
+                    priority
+                  />
+                </div>
+              ) : (
+                <span className="text-white font-display text-lg">Drumond Sports</span>
+              )}
             </Link>
             <ul className="flex gap-5 justify-center">
               {navLinks.map((link) => (
@@ -100,16 +108,20 @@ export default function Navbar() {
           }`}
         >
           <Link href="/" className="shrink-0">
-            <div className="relative h-10 w-36 md:h-14 md:w-56">
-              <Image
-  src={logoSrc}
-  alt="Drumond Sports"
-  fill
-  className={`object-contain ${isScrolled ? "object-left" : ""}`}
-  sizes="(max-width: 768px) 144px, 224px"
-  priority
-/>
-            </div>
+            {logoSrc ? (
+              <div className={`relative h-10 w-36 md:h-14 md:w-56`}>
+                <Image
+                  src={logoSrc}
+                  alt="Drumond Sports"
+                  fill
+                  className={`object-contain ${isScrolled ? "object-left" : ""}`}
+                  sizes={isScrolled ? "(max-width: 768px) 144px, 224px" : "(max-width: 768px) 160px, 224px"}
+                  priority
+                />
+              </div>
+            ) : (
+              <span className="text-white font-display text-lg">Drumond Sports</span>
+            )}
           </Link>
 
           <ul className="hidden md:flex gap-5 md:gap-10 m-0 p-0">

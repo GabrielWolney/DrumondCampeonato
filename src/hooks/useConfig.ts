@@ -25,6 +25,7 @@ export interface Config {
   hero_title_image: string;
   hero_title_image_mobile: string;
   navbar_logo: string;
+  navbar_logo_scrolled: string;  // NOVO
   section_about_title: string;
   section_schedule_title: string;
   section_location_title: string;
@@ -57,9 +58,10 @@ export function useConfig() {
     maps_link: "",
     waze_link: "",
     maps_embed_link: "",
-    hero_title_image: "/titulo-nacional.png",
-    hero_title_image_mobile: "/titulo-nacional.png",
-    navbar_logo: "/logo-barra.png",
+    hero_title_image: "",
+    hero_title_image_mobile: "",
+    navbar_logo: "",
+    navbar_logo_scrolled: "",   // NOVO
     section_about_title: "Sobre o Evento",
     section_schedule_title: "Programação",
     section_location_title: "Local do Evento",
@@ -96,9 +98,10 @@ export function useConfig() {
       maps_link: configObj.maps_link || "",
       waze_link: configObj.waze_link || "",
       maps_embed_link: configObj.maps_embed_link || "",
-      hero_title_image: configObj.hero_title_image || "/titulo-nacional.png",
-      hero_title_image_mobile: configObj.hero_title_image_mobile || "/titulo-nacional.png",
-      navbar_logo: configObj.navbar_logo || "/logo-barra.png",
+      hero_title_image: configObj.hero_title_image || "",
+      hero_title_image_mobile: configObj.hero_title_image_mobile || "",
+      navbar_logo: configObj.navbar_logo || "",
+      navbar_logo_scrolled: configObj.navbar_logo_scrolled || "",   // NOVO
       section_about_title: configObj.section_about_title || "Sobre o Evento",
       section_schedule_title: configObj.section_schedule_title || "Programação",
       section_location_title: configObj.section_location_title || "Local do Evento",
@@ -139,9 +142,10 @@ export function useConfig() {
         maps_link: configObj.maps_link || "",
         waze_link: configObj.waze_link || "",
         maps_embed_link: configObj.maps_embed_link || "",
-        hero_title_image: configObj.hero_title_image || "/titulo-nacional.png",
-        hero_title_image_mobile: configObj.hero_title_image_mobile || "/titulo-nacional.png",
-        navbar_logo: configObj.navbar_logo || "/logo-barra.png",
+        hero_title_image: configObj.hero_title_image || "",
+        hero_title_image_mobile: configObj.hero_title_image_mobile || "",
+        navbar_logo: configObj.navbar_logo || "",
+        navbar_logo_scrolled: configObj.navbar_logo_scrolled || "",   // NOVO
         section_about_title: configObj.section_about_title || "Sobre o Evento",
         section_schedule_title: configObj.section_schedule_title || "Programação",
         section_location_title: configObj.section_location_title || "Local do Evento",

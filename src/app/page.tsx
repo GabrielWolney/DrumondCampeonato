@@ -69,7 +69,7 @@ export default function Home() {
   const glassStyle =
     "bg-white/10 backdrop-blur-[12px] border border-white/20 shadow-[0_20px_50px_0_rgba(0,0,0,0.3),inset_1px_1px_2px_0_rgba(255,255,255,0.1)]";
 
-  const heroImage = config.hero_title_image || "/titulo-nacional.png";
+  const heroImage = config.hero_title_image;
   const aboutTitle = config.section_about_title || "Sobre o Evento";
   const scheduleTitle = config.section_schedule_title || "Programação";
   const locationTitle = config.section_location_title || "Local do Evento";
@@ -97,21 +97,23 @@ export default function Home() {
           
           {/* Hero */}
           <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex flex-col items-center mb-6 md:mb-10 text-center px-4"
-          >
-            <div className="relative w-[400px] h-[120px] md:w-[600px] md:h-[130px] mx-auto">
-              <Image
-  src={heroImage}
-  alt="Nacional de Sinuca"
-  fill
-  className="object-contain"
-  sizes="(max-width: 768px) 400px, 600px"
-  priority
-/>
-            </div>
-          </motion.div>
+  initial={{ opacity: 0, y: -10 }}
+  animate={{ opacity: 1, y: 0 }}
+  className="flex flex-col items-center mb-6 md:mb-10 text-center px-4"
+>
+  {heroImage ? (
+    <div className="relative w-[400px] h-[120px] md:w-[600px] md:h-[130px] mx-auto">
+      <Image
+        src={heroImage}
+        alt="Nacional de Sinuca"
+        fill
+        className="object-contain"
+        sizes="(max-width: 768px) 400px, 600px"
+        priority
+      />
+    </div>
+  ) : null}
+</motion.div>
 
           {/* Countdown */}
           <motion.div
@@ -354,26 +356,20 @@ export default function Home() {
           </section>
 
           {/* Botões de ação */}
-          <div className="w-full max-w-md px-5 md:px-6 mb-6 md:mb-10 flex flex-col sm:flex-row gap-3 md:gap-4 justify-center">
-            <Link
-              href="/ingressos"
-              className="bg-drumond-orange text-[#101820] rounded-full py-3 md:py-4 px-6 md:px-8 font-display text-lg md:text-xl uppercase italic shadow-[0_10px_20px_rgba(248,141,42,0.2)] hover:scale-[1.02] transition-transform text-center font-bold"
-            >
-              Ver Ingressos
-            </Link>
-            {loading || configLoading ? (
-              <Skeleton className="h-12 md:h-14 w-44 rounded-full" />
-            ) : config.partner_link ? (
-              <a
-                href={config.partner_link}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="bg-transparent border border-white/30 text-white rounded-full py-3 md:py-4 px-6 md:px-8 font-display text-lg md:text-xl uppercase italic hover:bg-white/10 transition-colors text-center"
-              >
-                Seja um Parceiro
-              </a>
-            ) : null}
-          </div>
+<div className="w-full max-w-md px-5 md:px-6 mb-6 md:mb-10 flex flex-col sm:flex-row gap-3 md:gap-4 justify-center">
+  <Link
+    href="/ingressos"
+    className="bg-drumond-orange text-[#101820] rounded-full py-3 md:py-4 px-6 md:px-8 font-display text-lg md:text-xl uppercase italic shadow-[0_10px_20px_rgba(248,141,42,0.2)] hover:scale-[1.02] transition-transform text-center font-bold"
+  >
+    Ver Ingressos
+  </Link>
+  <Link
+    href="/patrocinador"
+    className="bg-transparent border border-white/30 text-white rounded-full py-3 md:py-4 px-6 md:px-8 font-display text-lg md:text-xl uppercase italic hover:bg-white/10 transition-colors text-center"
+  >
+    Seja um Parceiro
+  </Link>
+</div>
 
           {/* Patrocinadores */}
           <section className="w-full max-w-6xl px-5 md:px-6 mb-14 md:mb-28">

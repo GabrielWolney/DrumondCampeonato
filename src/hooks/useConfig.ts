@@ -11,6 +11,9 @@ export interface Config {
   register_link: string;
   whatsapp_number: string;
   whatsapp_message: string;
+  // WhatsApp específico para página de patrocinador (fallback para os principais se vazios)
+  whatsapp_number_patrocinador: string;
+  whatsapp_message_patrocinador: string;
   meta_pixel_id: string;
   google_analytics_id: string;
   google_ads_id: string;
@@ -37,8 +40,7 @@ export interface Config {
   ingressos_description: string;
   patrocinador_title: string;
   patrocinador_intro: string;
-  // Banner de inscrição
-  register_banner_enabled: string; // "true" | "false"
+  register_banner_enabled: string;
   register_banner_text: string;
   register_banner_subtext: string;
 }
@@ -58,6 +60,8 @@ function parseConfig(data: { key: string; value: string }[]): Config {
     register_link: obj.register_link || "",
     whatsapp_number: obj.whatsapp_number || "",
     whatsapp_message: obj.whatsapp_message || "",
+    whatsapp_number_patrocinador: obj.whatsapp_number_patrocinador || "",
+    whatsapp_message_patrocinador: obj.whatsapp_message_patrocinador || "",
     meta_pixel_id: obj.meta_pixel_id || "",
     google_analytics_id: obj.google_analytics_id || "",
     google_ads_id: obj.google_ads_id || "",
@@ -104,6 +108,8 @@ export function useConfig() {
       register_link: "",
       whatsapp_number: "",
       whatsapp_message: "",
+      whatsapp_number_patrocinador: "",
+      whatsapp_message_patrocinador: "",
       meta_pixel_id: "",
       google_analytics_id: "",
       google_ads_id: "",

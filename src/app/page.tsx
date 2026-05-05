@@ -114,24 +114,38 @@ export default function Home() {
         <div className="pt-28 md:pt-44 flex flex-col items-center w-full">
           
           {/* Hero */}
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex flex-col items-center mb-6 md:mb-10 text-center px-4"
-          >
-            {heroImage ? (
-              <div className="relative w-[400px] h-[120px] md:w-[600px] md:h-[130px] mx-auto">
-                <Image
-                  src={heroImage}
-                  alt="Nacional de Sinuca"
-                  fill
-                  className="object-contain"
-                  sizes="(max-width: 768px) 400px, 600px"
-                  priority
-                />
-              </div>
-            ) : null}
-          </motion.div>
+<motion.div
+  initial={{ opacity: 0, y: -10 }}
+  animate={{ opacity: 1, y: 0 }}
+  className="flex flex-col items-center mb-6 md:mb-10 text-center px-4"
+>
+  {heroImage && (
+    <>
+      {/* Mobile */}
+      <div className="relative w-[400px] h-[120px] mx-auto md:hidden">
+        <Image
+          src={config.hero_title_image_mobile || heroImage}
+          alt="Nacional de Sinuca"
+          fill
+          className="object-contain"
+          sizes="400px"
+          priority
+        />
+      </div>
+      {/* Desktop */}
+      <div className="relative hidden md:block w-[600px] h-[130px] mx-auto">
+        <Image
+          src={heroImage}
+          alt="Nacional de Sinuca"
+          fill
+          className="object-contain"
+          sizes="600px"
+          priority
+        />
+      </div>
+    </>
+  )}
+</motion.div>
 
           {/* Countdown */}
           <motion.div

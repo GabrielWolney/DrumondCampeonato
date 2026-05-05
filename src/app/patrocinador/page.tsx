@@ -1,13 +1,9 @@
-import { Metadata } from "next";
+"use client";
+
+import { useConfig } from "@/hooks/useConfig";
 import Link from "next/link";
 import { FaTrophy, FaBroadcastTower, FaUsers, FaMedal, FaMapMarkerAlt, FaWhatsapp } from "react-icons/fa";
 import { MdVerified } from "react-icons/md";
-
-export const metadata: Metadata = {
-  title: "Seja um Patrocinador | Nacional de Sinuca",
-  description:
-    "Associe sua marca ao maior evento de sinuca do Brasil. Confira nossos diferenciais e fale com a organização.",
-};
 
 const diferenciais = [
   {
@@ -49,12 +45,31 @@ const diferenciais = [
 ];
 
 export default function PatrocinadorPage() {
+  const { config, loading: configLoading } = useConfig();
+
   const glassStyle =
     "bg-white/10 backdrop-blur-[12px] border border-white/20 shadow-[0_20px_50px_0_rgba(0,0,0,0.3),inset_1px_1px_2px_0_rgba(255,255,255,0.1)]";
 
+  // Usa o número específico para patrocinador se definido; senão, o principal
+  const defaultNumber = "5561992958172";
+  const defaultMessage = "Olá!%20Tenho%20interesse%20em%20patrocinar%20o%201º%20Nacional%20de%20Sinuquinha.";
+
+  const whatsappNumber =
+    config.whatsapp_number_patrocinador || config.whatsapp_number || defaultNumber;
+  const rawMessage =
+    config.whatsapp_message_patrocinador || config.whatsapp_message || "";
+  const whatsappMessage = rawMessage
+    ? encodeURIComponent(rawMessage)
+    : defaultMessage;
+
+  const title = !configLoading && config.patrocinador_title ? config.patrocinador_title : "Seja um Patrocinador";
+  const intro = !configLoading && config.patrocinador_intro
+    ? config.patrocinador_intro
+    : "Posicione sua marca ao lado do maior evento de sinuca do Brasil e conecte-se a um público apaixonado por esporte e entretenimento.";
+
   return (
     <>
-      {/* Fundo ambiente (idêntico ao das outras páginas) */}
+      {/* Fundo ambiente */}
       <div aria-hidden="true" className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
         <div
           className="absolute inset-0"
@@ -69,17 +84,23 @@ export default function PatrocinadorPage() {
           {/* Hero */}
           <section className="text-center mb-12 md:mb-20">
             <h1 className="font-display text-4xl md:text-7xl text-white uppercase italic leading-tight mb-4">
-              Seja um <span className="text-drumond-orange">Patrocinador</span>
+              {title.split(" ").map((word, i) =>
+                i === title.split(" ").length - 1 && title.toLowerCase().includes("patrocinador") ? (
+                  <span key={i} className="text-drumond-orange">{word}</span>
+                ) : (
+                  word + " "
+                )
+              )}
             </h1>
             <div className="w-16 h-[2px] bg-drumond-orange/60 mx-auto mb-6" />
             <p className="text-base md:text-lg text-gray-300 max-w-2xl mx-auto leading-relaxed">
-              Posicione sua marca ao lado do maior evento de sinuca do Brasil e conecte-se a um público apaixonado por esporte e entretenimento.
+              {intro}
             </p>
 
-            {/* Botão WhatsApp no hero (restaurado) */}
+            {/* Botão WhatsApp no hero */}
             <div className="mt-8 flex justify-center">
               <a
-                href="https://wa.me/5561992958172?text=Olá!%20Tenho%20interesse%20em%20patrocinar%20o%201º%20Nacional%20de%20Sinuquinha."
+                href={`https://wa.me/${whatsappNumber}?text=${whatsappMessage}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-full font-display text-lg uppercase italic tracking-wider transition-colors shadow-lg"
@@ -114,7 +135,7 @@ export default function PatrocinadorPage() {
             </div>
           </section>
 
-          {/* Contato final – glass style consistente */}
+          {/* Contato final */}
           <section className="max-w-3xl mx-auto mb-12 md:mb-20">
             <div className={`${glassStyle} rounded-[40px] p-8 md:p-10 text-center`}>
               <h2 className="font-display text-2xl md:text-3xl text-white uppercase italic mb-4">
@@ -124,7 +145,7 @@ export default function PatrocinadorPage() {
                 Fale diretamente com nossa equipe e descubra as cotas disponíveis para sua marca.
               </p>
               <a
-                href="https://wa.me/5561992958172?text=Olá!%20Tenho%20interesse%20em%20patrocinar%20o%201º%20Nacional%20de%20Sinuquinha."
+                href={`https://wa.me/${whatsappNumber}?text=${whatsappMessage}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-3 bg-green-600 hover:bg-green-700 text-white px-10 py-4 rounded-full font-display text-lg md:text-xl uppercase italic tracking-wider transition-colors shadow-lg"
@@ -135,7 +156,7 @@ export default function PatrocinadorPage() {
             </div>
           </section>
 
-          {/* Voltar – botão discreto com borda */}
+          {/* Voltar */}
           <div className="flex justify-start max-w-6xl mx-auto">
             <Link
               href="/"

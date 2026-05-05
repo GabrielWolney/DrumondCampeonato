@@ -6,7 +6,7 @@ import Image from "next/image";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 
 export function GaleriaTab() {
-  const { fotos, loading, updateOrdem, uploadFotos, deleteFoto } = useFotos();
+  const { fotos, loading, error, updateOrdem, uploadFotos, deleteFoto, retry } = useFotos();
   const [uploading, setUploading] = useState(false);
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -27,6 +27,19 @@ export function GaleriaTab() {
 
   const glassStyle = "bg-[#101820]/80 backdrop-blur-md border border-white/20 shadow-xl rounded-[30px] p-8";
 
+  if (loading) return <div className="text-white p-8">Carregando galeria...</div>;
+
+  if (error) {
+    return (
+      <div className={glassStyle + " text-center"}>
+        <p className="text-red-400 mb-4">{error}</p>
+        <button onClick={retry} className="bg-drumond-orange text-black px-6 py-3 rounded-full font-bold">
+          Tentar novamente
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className={glassStyle}>
       <div className="flex justify-between items-center mb-6">
@@ -37,7 +50,7 @@ export function GaleriaTab() {
         </label>
       </div>
 
-      {fotos.length === 0 && !loading ? (
+      {fotos.length === 0 ? (
         <div className="text-center py-16 text-gray-400 border border-dashed">Nenhuma foto ainda.</div>
       ) : (
         <DragDropContext onDragEnd={onDragEnd}>

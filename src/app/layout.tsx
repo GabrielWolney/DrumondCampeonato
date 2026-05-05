@@ -6,6 +6,7 @@ import { createClient } from "@supabase/supabase-js";
 import { ToastProvider } from "@/components/ui/Toast";
 import { LightboxProvider } from "@/context/LightboxContext";
 import "./globals.css";
+import PhotoLightbox from "@/components/PhotoLightbox";
 
 const openSans = Open_Sans({
   subsets: ["latin"],
@@ -203,6 +204,7 @@ export default async function RootLayout({
             <main id="main-scroll-container" className="w-full h-full overflow-y-auto overflow-x-hidden relative">
               {children}
             </main>
+            <PhotoLightbox />
           </ToastProvider>
         </LightboxProvider>
       </body>

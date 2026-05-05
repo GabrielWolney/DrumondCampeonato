@@ -7,7 +7,7 @@ import { useToast } from "@/components/ui/Toast";
 import Image from "next/image";
 
 export function ConfiguracoesTab() {
-  const { config, updateConfig, saveConfig, loading } = useConfig();
+  const { config, updateConfig, saveConfig, loading, error, retry } = useConfig();
   const { showToast } = useToast();
   const [uploading, setUploading] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -20,7 +20,21 @@ export function ConfiguracoesTab() {
     return srcMatch ? srcMatch[1] : value;
   }, []);
 
-  if (loading) return <div className="text-white p-8">Carregando...</div>;
+  if (loading) return <div className="text-white p-8">Carregando configurações...</div>;
+
+  if (error) {
+    return (
+      <div className="bg-[#101820]/80 backdrop-blur-md border border-white/20 rounded-[30px] p-8 text-center">
+        <p className="text-red-400 mb-4">{error}</p>
+        <button
+          onClick={retry}
+          className="bg-drumond-orange text-black px-6 py-3 rounded-full font-bold"
+        >
+          Tentar novamente
+        </button>
+      </div>
+    );
+  }
 
   const handleChange = (key: keyof typeof config, value: string) => {
     if (key === "maps_embed_link") {
@@ -231,13 +245,33 @@ export function ConfiguracoesTab() {
             Cole o link de incorporação do Google Maps (URL ou iframe completo). O sistema extrai a URL automaticamente.
           </p>
         </div>
+        <div className="md:col-span-2">
+          <hr className="border-white/20 my-4" />
+          <h3 className="text-lg font-display text-white mb-4">WhatsApp</h3>
+        </div>
         <div>
-          <label className="block text-sm font-bold text-gray-300">WhatsApp número</label>
+          <label className="block text-sm font-bold text-gray-300">Número Principal</label>
           <input type="text" value={config.whatsapp_number} onChange={(e) => handleChange("whatsapp_number", e.target.value)} className="w-full p-2 rounded-lg bg-black/30 border border-white/20 text-white" />
         </div>
+        <div>
+          <label className="block text-sm font-bold text-gray-300">Mensagem Principal</label>
+          <input type="text" value={config.whatsapp_message} onChange={(e) => handleChange("whatsapp_message", e.target.value)} className="w-full p-2 rounded-lg bg-black/30 border border-white/20 text-white" />
+        </div>
         <div className="md:col-span-2">
-          <label className="block text-sm font-bold text-gray-300">Mensagem WhatsApp</label>
-          <textarea rows={2} value={config.whatsapp_message} onChange={(e) => handleChange("whatsapp_message", e.target.value)} className="w-full p-2 rounded-lg bg-black/30 border border-white/20 text-white" />
+          <hr className="border-white/20 my-2" />
+          <h4 className="text-md font-display text-white/80 mb-2">Patrocinador (página específica)</h4>
+          <p className="text-xs text-gray-400 mb-4">Se vazio, será usado o número e mensagem principal.</p>
+        </div>
+        <div>
+          <label className="block text-sm font-bold text-gray-300">Número Patrocinador</label>
+          <input type="text" value={config.whatsapp_number_patrocinador} onChange={(e) => handleChange("whatsapp_number_patrocinador", e.target.value)} placeholder="Usa principal se vazio" className="w-full p-2 rounded-lg bg-black/30 border border-white/20 text-white" />
+        </div>
+        <div>
+          <label className="block text-sm font-bold text-gray-300">Mensagem Patrocinador</label>
+          <input type="text" value={config.whatsapp_message_patrocinador} onChange={(e) => handleChange("whatsapp_message_patrocinador", e.target.value)} placeholder="Usa principal se vazio" className="w-full p-2 rounded-lg bg-black/30 border border-white/20 text-white" />
+        </div>
+        <div className="md:col-span-2">
+          <hr className="border-white/20 my-4" />
         </div>
         <div className="md:col-span-2">
           <label className="block text-sm font-bold text-gray-300">Texto &quot;Sobre o Evento&quot;</label>
@@ -332,7 +366,7 @@ export function ConfiguracoesTab() {
             className="w-full p-2 rounded-lg bg-black/30 border border-white/20 text-white"
           />
         </div>
-        {/* NOVO: Banner de Inscrição */}
+        {/* Banner de Inscrição */}
         <div className="md:col-span-2">
           <hr className="border-white/20 my-2" />
           <h3 className="text-lg font-display text-white mb-2">Banner de Inscrição</h3>

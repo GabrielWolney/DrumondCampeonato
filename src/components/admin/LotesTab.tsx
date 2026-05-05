@@ -5,7 +5,7 @@ import { useTicketTiers, TicketTier } from "@/hooks/useTicketTiers";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 
 export function LotesTab() {
-  const { tiers, loading, saveTier, deleteTier, updateOrdem } = useTicketTiers();
+  const { tiers, loading, error, saveTier, deleteTier, updateOrdem, retry } = useTicketTiers();
   const [editing, setEditing] = useState<Partial<TicketTier> | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -38,7 +38,18 @@ export function LotesTab() {
 
   const glassStyle = "bg-[#101820]/80 backdrop-blur-md border border-white/20 shadow-xl rounded-[30px] p-8";
 
-  if (loading) return <div className="text-white p-8">Carregando...</div>;
+  if (loading) return <div className="text-white p-8">Carregando lotes...</div>;
+
+  if (error) {
+    return (
+      <div className={glassStyle + " text-center"}>
+        <p className="text-red-400 mb-4">{error}</p>
+        <button onClick={retry} className="bg-drumond-orange text-black px-6 py-3 rounded-full font-bold">
+          Tentar novamente
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className={glassStyle}>

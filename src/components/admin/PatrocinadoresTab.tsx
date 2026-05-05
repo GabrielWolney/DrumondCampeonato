@@ -6,7 +6,7 @@ import Image from "next/image";
 import { useToast } from "@/components/ui/Toast";
 
 export function PatrocinadoresTab() {
-  const { sponsors, saveSponsor, deleteSponsor } = useSponsors();
+  const { sponsors, loading, error, saveSponsor, deleteSponsor, retry } = useSponsors();
   const { showToast } = useToast();
   const [editing, setEditing] = useState<Sponsor | null>(null);
   const [name, setName] = useState("");
@@ -14,12 +14,27 @@ export function PatrocinadoresTab() {
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
-  // Limpa a URL de preview quando o componente desmonta ou quando a imagem é trocada
   useEffect(() => {
     return () => {
       if (previewUrl) URL.revokeObjectURL(previewUrl);
     };
   }, [previewUrl]);
+
+  if (loading) return <div className="text-white p-8">Carregando patrocinadores...</div>;
+
+  if (error) {
+    return (
+      <div className="bg-[#101820]/80 backdrop-blur-md border border-white/20 rounded-[30px] p-8 text-center">
+        <p className="text-red-400 mb-4">{error}</p>
+        <button
+          onClick={retry}
+          className="bg-drumond-orange text-black px-6 py-3 rounded-full font-bold"
+        >
+          Tentar novamente
+        </button>
+      </div>
+    );
+  }
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
@@ -57,7 +72,6 @@ export function PatrocinadoresTab() {
 
   const glassStyle = "bg-[#101820]/80 backdrop-blur-md border border-white/20 shadow-xl rounded-[30px] p-8";
 
-  // URL para exibição (previne undefined)
   const imageSrc = previewUrl || editing?.logo_url || "";
 
   return (
@@ -66,16 +80,15 @@ export function PatrocinadoresTab() {
         <h3 className="text-xl mb-6 font-display text-white">{editing ? "Editar" : "Novo"} Patrocinador</h3>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="flex items-center gap-4 bg-white/5 p-3 rounded-xl">
-            {/* Preview da logo */}
             {(previewUrl || editing?.logo_url) && (
               <div className="w-14 h-14 relative rounded-lg overflow-hidden bg-gray-700 shrink-0">
                 <Image
-  src={imageSrc}
-  fill
-  className="object-contain"
-  sizes="56px"
-  alt="Preview"
-/>
+                  src={imageSrc}
+                  fill
+                  className="object-contain"
+                  sizes="56px"
+                  alt="Preview"
+                />
               </div>
             )}
             {!previewUrl && !editing?.logo_url && (
@@ -84,7 +97,7 @@ export function PatrocinadoresTab() {
               </div>
             )}
             <label className="bg-gray-700 text-white px-4 py-2 rounded-lg cursor-pointer text-xs w-full text-center hover:bg-gray-600 transition">
-              {logoFile ? "Arquivo selecionado" : (editing?.logo_url ? "Trocar Logo" : "Enviar Logo")}
+              {logoFile ? "Arquivo selecionado" : editing?.logo_url ? "Trocar Logo" : "Enviar Logo"}
               <input type="file" accept="image/*" hidden onChange={handleFileChange} />
             </label>
           </div>

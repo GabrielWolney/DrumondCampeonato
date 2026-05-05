@@ -5,6 +5,7 @@ import Image from "next/image";
 import { motion, PanInfo } from "framer-motion";
 import { supabase } from "@/lib/supabase";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { useLightbox } from "@/context/LightboxContext";
 
 interface Foto {
   id: string;
@@ -41,6 +42,7 @@ export default function PhotoCarousel() {
   const [fotos, setFotos] = useState<Foto[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const { open } = useLightbox();
 
   useEffect(() => {
     async function loadFotos() {
@@ -122,7 +124,14 @@ export default function PhotoCarousel() {
               dragElastic={0.2}
               onDragEnd={isCenter ? handleSwipe : undefined}
               onClick={() => {
-                if (!isCenter) setCurrentIndex(idx);
+                if (!isCenter) {
+                  setCurrentIndex(idx);
+                }
+              }}
+              onDoubleClick={() => {
+                if (isCenter) {
+                  open(fotos.map(f => f.image_url), currentIndex);
+                }
               }}
               className={`absolute shadow-[0_15px_40px_rgba(0,0,0,0.4)] border-2 border-drumond-orange/40 bg-[#101820] rounded-2xl overflow-hidden ${
                 isCenter ? "cursor-grab active:cursor-grabbing" : "cursor-pointer"
@@ -130,6 +139,16 @@ export default function PhotoCarousel() {
               style={{ width: "min(65vw, 260px)", aspectRatio: "3/4" }}
             >
               <CarouselImage url={item.image_url} index={idx} isPriority={Math.abs(diff) <= 1} />
+              {isCenter && (
+                <div className="absolute bottom-3 right-3 z-20 pointer-events-none">
+                  <span className="hidden md:inline text-[10px] text-white/40 font-medium tracking-wider">
+                    2× para ampliar
+                  </span>
+                  <span className="md:hidden text-[10px] text-white/40 font-medium tracking-wider">
+                    toque 2×
+                  </span>
+                </div>
+              )}
             </motion.div>
           );
         })}

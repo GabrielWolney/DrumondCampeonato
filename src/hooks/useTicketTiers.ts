@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/Toast";
-
+/* eslint-disable react-hooks/set-state-in-effect */
 export interface TicketTier {
   id: string;
   name: string;
@@ -15,62 +15,60 @@ export interface TicketTier {
   end_date: string | null;
   purchase_link: string | null;
   ordem: number;
+  highlight?: boolean; // NOVO
 }
+
+let cachedTiers: TicketTier[] | null = null;
 
 export function useTicketTiers() {
   const { showToast } = useToast();
-  const [tiers, setTiers] = useState<TicketTier[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [tiers, setTiers] = useState<TicketTier[]>(cachedTiers || []);
+  const [loading, setLoading] = useState(!cachedTiers);
+  const [error, setError] = useState<string | null>(null);
+  const cancelledRef = useRef(false);
 
-  const fetchTiers = useCallback(async () => {
+  const fetchTiers = useCallback(async (force = false) => {
+    if (!force && cachedTiers) return;
+
     try {
-      const { data, error } = await supabase
+      const { data, error: err } = await supabase
         .from("ticket_tiers")
         .select("*")
         .order("ordem", { ascending: true });
-      if (error) throw error;
-      setTiers(data || []);
+
+      if (err) throw new Error(err.message);
+
+      cachedTiers = data || [];
+      if (!cancelledRef.current) {
+        setTiers(cachedTiers);
+      }
     } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : "Erro ao carregar lotes";
-      console.error(message);
+      const message = err instanceof Error ? err.message : "Erro ao carregar lotes";
       showToast(message, "error");
+      if (!cancelledRef.current) {
+        setError(message);
+        setTiers([]);
+      }
     } finally {
-      setLoading(false);
+      if (!cancelledRef.current) {
+        setLoading(false);
+      }
     }
   }, [showToast]);
 
-  useEffect(() => {
-    let isMounted = true;
-    const load = async () => {
-      try {
-        const { data, error } = await supabase
-          .from("ticket_tiers")
-          .select("*")
-          .order("ordem", { ascending: true });
-        if (error) throw error;
-        if (isMounted) {
-          setTiers(data || []);
-          setLoading(false);
-        }
-      } catch (err: unknown) {
-        if (isMounted) {
-          const message =
-            err instanceof Error ? err.message : "Erro ao carregar lotes";
-          showToast(message, "error");
-          setLoading(false);
-        }
-      }
-    };
-    load();
+      useEffect(() => {
+    cancelledRef.current = false;
+    if (!cachedTiers) {
+      fetchTiers();
+    }
     return () => {
-      isMounted = false;
+      cancelledRef.current = true;
     };
-  }, [showToast]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const saveTier = async (tier: Partial<TicketTier>) => {
-    const price =
-      typeof tier.price === "number" && !isNaN(tier.price) ? tier.price : 0;
+    const price = typeof tier.price === "number" && !isNaN(tier.price) ? tier.price : 0;
     const tierData = {
       name: tier.name || "",
       price,
@@ -98,28 +96,23 @@ export function useTicketTiers() {
         if (error) throw error;
         showToast("Lote criado com sucesso!", "success");
       }
-      await fetchTiers();
+      cachedTiers = null;
+      await fetchTiers(true);
     } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : "Erro desconhecido ao salvar lote";
-      console.error(message);
+      const message = err instanceof Error ? err.message : "Erro desconhecido ao salvar lote";
       showToast(message, "error");
     }
   };
 
   const deleteTier = async (id: string) => {
     try {
-      const { error } = await supabase
-        .from("ticket_tiers")
-        .delete()
-        .eq("id", id);
+      const { error } = await supabase.from("ticket_tiers").delete().eq("id", id);
       if (error) throw error;
       showToast("Lote removido com sucesso!", "success");
-      await fetchTiers();
+      cachedTiers = null;
+      await fetchTiers(true);
     } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : "Erro ao remover lote";
-      console.error(message);
+      const message = err instanceof Error ? err.message : "Erro ao remover lote";
       showToast(message, "error");
     }
   };
@@ -130,16 +123,24 @@ export function useTicketTiers() {
         supabase.from("ticket_tiers").update({ ordem: idx }).eq("id", item.id)
       );
       await Promise.all(updates);
-      setTiers(items);
-      showToast("Ordem atualizada com sucesso!", "success");
+      cachedTiers = items;
+      if (!cancelledRef.current) {
+        setTiers(items);
+        showToast("Ordem atualizada com sucesso!", "success");
+      }
     } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : "Erro ao salvar ordem";
-      console.error(message);
+      const message = err instanceof Error ? err.message : "Erro ao salvar ordem";
       showToast(message, "error");
-      await fetchTiers();
+      cachedTiers = null;
+      await fetchTiers(true);
     }
   };
 
-  return { tiers, loading, saveTier, deleteTier, updateOrdem, fetchTiers };
+  const retry = useCallback(() => {
+    setLoading(true);
+    setError(null);
+    fetchTiers(true);
+  }, [fetchTiers]);
+
+  return { tiers, loading, error, saveTier, deleteTier, updateOrdem, fetchTiers: retry, retry };
 }

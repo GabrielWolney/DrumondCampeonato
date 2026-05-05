@@ -31,5 +31,8 @@ export function useAuth() {
     setUser(null);
   };
 
-  return { user, loading, login, logout };
+  // Propriedade derivada para verificação de admin
+  const isAdmin: boolean = user?.user_metadata?.is_admin === true;
+
+  return { user, loading, login, logout, isAdmin };
 }

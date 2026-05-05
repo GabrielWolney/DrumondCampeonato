@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import { compressAndUpload } from "@/lib/imageUploader";
-
+/* eslint-disable react-hooks/set-state-in-effect */
 export interface Sponsor {
   id: string;
   name: string;
@@ -12,27 +12,51 @@ export interface Sponsor {
   ordem: number;
 }
 
+let cachedSponsors: Sponsor[] | null = null;
+
 export function useSponsors() {
-  const [sponsors, setSponsors] = useState<Sponsor[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [sponsors, setSponsors] = useState<Sponsor[]>(cachedSponsors || []);
+  const [loading, setLoading] = useState(!cachedSponsors);
+  const [error, setError] = useState<string | null>(null);
+  const cancelledRef = useRef(false);
 
-  const fetchSponsors = useCallback(async () => {
-    const { data } = await supabase.from("sponsors").select("*").order("ordem", { ascending: true });
-    setSponsors(data || []);
-    setLoading(false);
-  }, []);
+  const fetchSponsors = useCallback(async (force = false) => {
+    if (!force && cachedSponsors) return;
 
-  useEffect(() => {
-    let isMounted = true;
-    const load = async () => {
-      const { data } = await supabase.from("sponsors").select("*").order("ordem", { ascending: true });
-      if (isMounted) {
-        setSponsors(data || []);
+    try {
+      const { data, error: err } = await supabase
+        .from("sponsors")
+        .select("*")
+        .order("ordem", { ascending: true });
+
+      if (err) throw new Error(err.message);
+
+      cachedSponsors = data || [];
+      if (!cancelledRef.current) {
+        setSponsors(cachedSponsors);
+      }
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Erro ao carregar patrocinadores";
+      if (!cancelledRef.current) {
+        setError(message);
+        setSponsors([]);
+      }
+    } finally {
+      if (!cancelledRef.current) {
         setLoading(false);
       }
+    }
+  }, []);
+
+      useEffect(() => {
+    cancelledRef.current = false;
+    if (!cachedSponsors) {
+      fetchSponsors();
+    }
+    return () => {
+      cancelledRef.current = true;
     };
-    load();
-    return () => { isMounted = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const saveSponsor = async (sponsor: Partial<Sponsor>, logoFile?: File) => {
@@ -57,7 +81,8 @@ export function useSponsors() {
       } else {
         await supabase.from("sponsors").insert([sponsorData]);
       }
-      await fetchSponsors(); // recarrega a lista
+      cachedSponsors = null;
+      await fetchSponsors(true);
     } catch (err) {
       console.error(err);
       throw err;
@@ -66,8 +91,15 @@ export function useSponsors() {
 
   const deleteSponsor = async (id: string) => {
     await supabase.from("sponsors").delete().eq("id", id);
-    await fetchSponsors();
+    cachedSponsors = null;
+    await fetchSponsors(true);
   };
 
-  return { sponsors, loading, saveSponsor, deleteSponsor, fetchSponsors };
+  const retry = useCallback(() => {
+    setLoading(true);
+    setError(null);
+    fetchSponsors(true);
+  }, [fetchSponsors]);
+
+  return { sponsors, loading, error, saveSponsor, deleteSponsor, fetchSponsors: retry, retry };
 }

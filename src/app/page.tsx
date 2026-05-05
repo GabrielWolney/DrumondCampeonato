@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
@@ -11,6 +11,13 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { supabase } from "@/lib/supabase";
 import { useConfig } from "@/hooks/useConfig";
 import { FaInstagram, FaFacebook, FaTiktok } from "react-icons/fa";
+
+// Tipagem para o gtag global
+declare global {
+  interface Window {
+    gtag?: (...args: unknown[]) => void;
+  }
+}
 
 interface Sponsor {
   id: string;
@@ -66,6 +73,16 @@ export default function Home() {
     loadData();
   }, []);
 
+  // Função de tracking padronizada
+  const trackClick = useCallback((action: string, label: string) => {
+    if (typeof window !== "undefined" && window.gtag) {
+      window.gtag("event", action, {
+        event_category: "engagement",
+        event_label: label,
+      });
+    }
+  }, []);
+
   const glassStyle =
     "bg-white/10 backdrop-blur-[12px] border border-white/20 shadow-[0_20px_50px_0_rgba(0,0,0,0.3),inset_1px_1px_2px_0_rgba(255,255,255,0.1)]";
 
@@ -77,6 +94,7 @@ export default function Home() {
   const footerText = config.footer_text || "Drumond Sports";
   const footerSubtext = config.footer_subtext || "Brasília . 2026";
   const mapsEmbedLink = config.maps_embed_link || "";
+  const registerLink = config.register_link || "#";
 
   return (
     <>
@@ -97,23 +115,23 @@ export default function Home() {
           
           {/* Hero */}
           <motion.div
-  initial={{ opacity: 0, y: -10 }}
-  animate={{ opacity: 1, y: 0 }}
-  className="flex flex-col items-center mb-6 md:mb-10 text-center px-4"
->
-  {heroImage ? (
-    <div className="relative w-[400px] h-[120px] md:w-[600px] md:h-[130px] mx-auto">
-      <Image
-        src={heroImage}
-        alt="Nacional de Sinuca"
-        fill
-        className="object-contain"
-        sizes="(max-width: 768px) 400px, 600px"
-        priority
-      />
-    </div>
-  ) : null}
-</motion.div>
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex flex-col items-center mb-6 md:mb-10 text-center px-4"
+          >
+            {heroImage ? (
+              <div className="relative w-[400px] h-[120px] md:w-[600px] md:h-[130px] mx-auto">
+                <Image
+                  src={heroImage}
+                  alt="Nacional de Sinuca"
+                  fill
+                  className="object-contain"
+                  sizes="(max-width: 768px) 400px, 600px"
+                  priority
+                />
+              </div>
+            ) : null}
+          </motion.div>
 
           {/* Countdown */}
           <motion.div
@@ -159,63 +177,55 @@ export default function Home() {
             </div>
           </section>
 
+          {/* Programação */}
           <section className="w-full max-w-5xl px-5 md:px-6 mb-8 md:mb-12">
-  <div className="text-center mb-6 md:mb-10">
-    <h2 className="font-display text-2xl md:text-3xl text-white uppercase italic tracking-wide">
-      {scheduleTitle}
-    </h2>
-    <div className="w-12 md:w-16 h-[2px] bg-drumond-orange mx-auto mt-2 opacity-50" />
-  </div>
-  {loading || configLoading ? (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5">
-      {[1, 2, 3, 4].map((i) => (
-        <div key={i} className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10">
-          <Skeleton className="h-4 w-24 mb-2" />
-          <Skeleton className="h-3 w-16 mb-3" />
-          <Skeleton className="h-5 w-32 mb-2" />
-          <Skeleton className="h-4 w-full" />
-        </div>
-      ))}
-    </div>
-  ) : schedule.length > 0 ? (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5">
-      {schedule.map((day) => (
-        <div
-          key={day.id}
-          className="group relative bg-white/5 backdrop-blur-sm rounded-2xl overflow-hidden border border-white/10 hover:border-drumond-orange/40 transition-all duration-300 flex flex-col"
-        >
-          {/* Barra lateral laranja super sutil (apenas 3px) */}
-          <div className="absolute left-0 top-4 bottom-4 w-[3px] bg-drumond-orange/60 rounded-r-full" />
-          
-          <div className="p-5 md:p-6 flex flex-col flex-1">
-            {/* Data pequena e discreta */}
-            <p className="text-drumond-orange/80 text-xs font-bold uppercase tracking-widest mb-3">
-              {new Date(day.date + 'T00:00:00').toLocaleDateString("pt-BR", {
-                weekday: "short", day: "2-digit", month: "short",
-              })}
-            </p>
-            
-            {/* Título destacado */}
-            <h3 className="font-display text-xl md:text-2xl text-white mb-3 leading-tight">
-              {day.title}
-            </h3>
-            
-            {/* Horário como detalhe */}
-            <div className="flex items-center gap-2 mb-4 text-gray-400 text-sm">
-              <span className="w-1.5 h-1.5 rounded-full bg-drumond-orange/80" />
-              {day.start_time.slice(0, 5)} – {day.end_time.slice(0, 5)}
+            <div className="text-center mb-6 md:mb-10">
+              <h2 className="font-display text-2xl md:text-3xl text-white uppercase italic tracking-wide">
+                {scheduleTitle}
+              </h2>
+              <div className="w-12 md:w-16 h-[2px] bg-drumond-orange mx-auto mt-2 opacity-50" />
             </div>
-            
-            {/* Descrição */}
-            <p className="text-gray-300/80 text-sm leading-relaxed flex-1">
-              {day.description}
-            </p>
-          </div>
-        </div>
-      ))}
-    </div>
-  ) : null}
-</section>
+            {loading || configLoading ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10">
+                    <Skeleton className="h-4 w-24 mb-2" />
+                    <Skeleton className="h-3 w-16 mb-3" />
+                    <Skeleton className="h-5 w-32 mb-2" />
+                    <Skeleton className="h-4 w-full" />
+                  </div>
+                ))}
+              </div>
+            ) : schedule.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5">
+                {schedule.map((day) => (
+                  <div
+                    key={day.id}
+                    className="group relative bg-white/5 backdrop-blur-sm rounded-2xl overflow-hidden border border-white/10 hover:border-drumond-orange/40 transition-all duration-300 flex flex-col"
+                  >
+                    <div className="absolute left-0 top-4 bottom-4 w-[3px] bg-drumond-orange/60 rounded-r-full" />
+                    <div className="p-5 md:p-6 flex flex-col flex-1">
+                      <p className="text-drumond-orange/80 text-xs font-bold uppercase tracking-widest mb-3">
+                        {new Date(day.date + 'T00:00:00').toLocaleDateString("pt-BR", {
+                          weekday: "short", day: "2-digit", month: "short",
+                        })}
+                      </p>
+                      <h3 className="font-display text-xl md:text-2xl text-white mb-3 leading-tight">
+                        {day.title}
+                      </h3>
+                      <div className="flex items-center gap-2 mb-4 text-gray-400 text-sm">
+                        <span className="w-1.5 h-1.5 rounded-full bg-drumond-orange/80" />
+                        {day.start_time.slice(0, 5)} – {day.end_time.slice(0, 5)}
+                      </div>
+                      <p className="text-gray-300/80 text-sm leading-relaxed flex-1">
+                        {day.description}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : null}
+          </section>
 
           {/* Local do Evento */}
           <section className="w-full max-w-5xl px-5 md:px-6 mb-6 md:mb-10">
@@ -314,7 +324,6 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* Mapa interativo ou placeholder */}
               {mapsEmbedLink ? (
                 <div className="rounded-xl md:rounded-2xl overflow-hidden border border-white/10 h-full min-h-[200px]">
                   <iframe
@@ -355,21 +364,33 @@ export default function Home() {
             </div>
           </section>
 
-          {/* Botões de ação */}
-<div className="w-full max-w-md px-5 md:px-6 mb-6 md:mb-10 flex flex-col sm:flex-row gap-3 md:gap-4 justify-center">
-  <Link
-    href="/ingressos"
-    className="bg-drumond-orange text-[#101820] rounded-full py-3 md:py-4 px-6 md:px-8 font-display text-lg md:text-xl uppercase italic shadow-[0_10px_20px_rgba(248,141,42,0.2)] hover:scale-[1.02] transition-transform text-center font-bold"
-  >
-    Ver Ingressos
-  </Link>
-  <Link
-    href="/patrocinador"
-    className="bg-transparent border border-white/30 text-white rounded-full py-3 md:py-4 px-6 md:px-8 font-display text-lg md:text-xl uppercase italic hover:bg-white/10 transition-colors text-center"
-  >
-    Seja um Parceiro
-  </Link>
-</div>
+          {/* Botões de ação (3 CTAs: Inscrição, Ingressos, Parceiro) */}
+          <div className="w-full max-w-3xl px-5 md:px-6 mb-6 md:mb-10 flex flex-col sm:flex-row gap-3 md:gap-4 justify-center">
+            {/* Destaque principal: Fazer Inscrição */}
+            <a
+              href={registerLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => trackClick("click_register", "hero_register")}
+              className="bg-drumond-orange text-[#101820] rounded-full py-3 md:py-4 px-6 md:px-8 font-display text-lg md:text-xl uppercase italic shadow-[0_10px_20px_rgba(248,141,42,0.2)] hover:scale-[1.02] transition-transform text-center font-bold"
+            >
+              Fazer Inscrição
+            </a>
+            <Link
+              href="/ingressos"
+              onClick={() => trackClick("click_buy_ticket", "hero_tickets")}
+              className="bg-transparent border border-drumond-orange/70 text-drumond-orange rounded-full py-3 md:py-4 px-6 md:px-8 font-display text-lg md:text-xl uppercase italic hover:bg-drumond-orange/10 transition-colors text-center font-bold"
+            >
+              Ver Ingressos
+            </Link>
+            <Link
+              href="/patrocinador"
+              onClick={() => trackClick("click_partner", "hero_partner")}
+              className="bg-transparent border border-white/30 text-white rounded-full py-3 md:py-4 px-6 md:px-8 font-display text-lg md:text-xl uppercase italic hover:bg-white/10 transition-colors text-center"
+            >
+              Seja um Parceiro
+            </Link>
+          </div>
 
           {/* Patrocinadores */}
           <section className="w-full max-w-6xl px-5 md:px-6 mb-14 md:mb-28">
@@ -405,12 +426,12 @@ export default function Home() {
                   >
                     <div className="relative w-24 h-16 md:w-40 md:h-24 bg-white/5 rounded-lg p-2">
                       <Image
-  src={sponsor.logo_url}
-  alt={sponsor.name}
-  fill
-  className="object-contain p-2"
-  sizes="(max-width: 768px) 96px, 160px"
-/>
+                        src={sponsor.logo_url}
+                        alt={sponsor.name}
+                        fill
+                        className="object-contain p-2"
+                        sizes="(max-width: 768px) 96px, 160px"
+                      />
                     </div>
                   </a>
                 ))}

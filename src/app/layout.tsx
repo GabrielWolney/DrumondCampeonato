@@ -58,27 +58,20 @@ export const metadata: Metadata = {
     creator: "@drumondsports",
   },
   applicationName: "Nacional de Sinuca",
-appleWebApp: {
-  capable: true,
-  title: "Nacional de Sinuca",
-  statusBarStyle: "black-translucent",
-},
-icons: {
-  icon: [
-    { url: "/favicon.ico", sizes: "any" },
-    { url: "/favicon-96x96.png", sizes: "96x96", type: "image/png" },
-    { url: "/favicon.svg", type: "image/svg+xml" },
-  ],
-  apple: [
-    { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
-  ],
-  other: [
-    {
-      rel: "manifest",
-      url: "/site.webmanifest",
-    },
-  ],
-},
+  appleWebApp: {
+    capable: true,
+    title: "Nacional de Sinuca",
+    statusBarStyle: "black-translucent",
+  },
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/favicon-96x96.png", sizes: "96x96", type: "image/png" },
+      { url: "/favicon.svg", type: "image/svg+xml" },
+    ],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+    other: [{ rel: "manifest", url: "/site.webmanifest" }],
+  },
   verification: { google: process.env.NEXT_PUBLIC_GOOGLE_VERIFICATION },
   category: "sports",
 };
@@ -121,10 +114,44 @@ export default async function RootLayout({
 
   return (
     <html lang="pt-BR" className={`${oswald.variable} ${openSans.variable} scroll-smooth`} suppressHydrationWarning>
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Event",
+              name: "Primeiro Nacional de Sinuca",
+              description:
+                "Os melhores jogadores do país em uma disputa única pelo título nacional. Ingressos limitados.",
+              startDate: "2026-11-15T09:00",
+              endDate: "2026-11-22T18:00",
+              location: {
+                "@type": "Place",
+                name: "Brasília",
+                address: {
+                  "@type": "PostalAddress",
+                  addressLocality: "Brasília",
+                  addressRegion: "DF",
+                  addressCountry: "BR",
+                },
+              },
+              organizer: {
+                "@type": "Organization",
+                name: "Drumond Sports",
+                url: "https://nacionaldesinuca.drumondsports.com.br",
+              },
+              image: "/share-image.webp",
+              url: process.env.NEXT_PUBLIC_SITE_URL || "https://nacionaldesinuca.drumondsports.com.br",
+              eventStatus: "https://schema.org/EventScheduled",
+              eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
+            }),
+          }}
+        />
+      </head>
       <body className="font-body antialiased overflow-hidden w-full h-[100dvh] relative">
         <LightboxProvider>
           <ToastProvider>
-            {/* Meta Pixel Code */}
             {scripts.metaPixel && (
               <>
                 <Script id="meta-pixel" strategy="afterInteractive">
@@ -147,7 +174,6 @@ export default async function RootLayout({
               </>
             )}
 
-            {/* Google Analytics */}
             {scripts.ga && (
               <>
                 <Script src={`https://www.googletagmanager.com/gtag/js?id=${scripts.ga}`} strategy="afterInteractive" />
@@ -162,7 +188,6 @@ export default async function RootLayout({
               </>
             )}
 
-            {/* Google Ads */}
             {scripts.ads && (
               <Script id="google-ads" strategy="afterInteractive">
                 {`

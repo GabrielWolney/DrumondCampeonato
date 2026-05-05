@@ -184,7 +184,7 @@ export function ConfiguracoesTab() {
         {/* Datas e títulos */}
         <div>
           <label className="block text-sm font-bold text-gray-300">Data do Evento</label>
-          <input type="datetime-local" value={config.event_date.slice(0,16)} onChange={(e) => handleChange("event_date", new Date(e.target.value).toISOString())} className="w-full p-2 rounded-lg bg-black/30 border border-white/20 text-white" />
+          <input type="datetime-local" value={config.event_date.slice(0, 16)} onChange={(e) => handleChange("event_date", new Date(e.target.value).toISOString())} className="w-full p-2 rounded-lg bg-black/30 border border-white/20 text-white" />
         </div>
         <div>
           <label className="block text-sm font-bold text-gray-300">Título Seção Sobre</label>
@@ -263,6 +263,16 @@ export function ConfiguracoesTab() {
           <label className="block text-sm font-bold text-gray-300">Introdução Patrocinador</label>
           <input type="text" value={config.patrocinador_intro} onChange={(e) => handleChange("patrocinador_intro", e.target.value)} className="w-full p-2 rounded-lg bg-black/30 border border-white/20 text-white" />
         </div>
+        <div>
+          <label className="block text-sm font-bold text-gray-300">Link de Inscrição (jogadores)</label>
+          <input
+            type="url"
+            value={config.register_link}
+            onChange={(e) => handleChange("register_link", e.target.value)}
+            className="w-full p-2 rounded-lg bg-black/30 border border-white/20 text-white"
+            placeholder="https://..."
+          />
+        </div>
         <div className="md:col-span-2">
           <hr className="border-white/20 my-4" />
           <h3 className="text-lg font-display text-white mb-4">Rodapé</h3>
@@ -319,6 +329,40 @@ export function ConfiguracoesTab() {
             type="text"
             value={config.tiktok_url}
             onChange={(e) => handleChange("tiktok_url", e.target.value)}
+            className="w-full p-2 rounded-lg bg-black/30 border border-white/20 text-white"
+          />
+        </div>
+        {/* NOVO: Banner de Inscrição */}
+        <div className="md:col-span-2">
+          <hr className="border-white/20 my-2" />
+          <h3 className="text-lg font-display text-white mb-2">Banner de Inscrição</h3>
+        </div>
+        <div className="flex items-center gap-4">
+          <label className="text-sm font-bold text-gray-300">Ativar banner</label>
+          <select
+            value={config.register_banner_enabled}
+            onChange={(e) => handleChange("register_banner_enabled", e.target.value)}
+            className="p-2 rounded-lg bg-black/30 border border-white/20 text-white"
+          >
+            <option value="true">Sim</option>
+            <option value="false">Não</option>
+          </select>
+        </div>
+        <div>
+          <label className="block text-sm font-bold text-gray-300">Título do banner</label>
+          <input
+            type="text"
+            value={config.register_banner_text}
+            onChange={(e) => handleChange("register_banner_text", e.target.value)}
+            className="w-full p-2 rounded-lg bg-black/30 border border-white/20 text-white"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-bold text-gray-300">Subtítulo do banner</label>
+          <input
+            type="text"
+            value={config.register_banner_subtext}
+            onChange={(e) => handleChange("register_banner_subtext", e.target.value)}
             className="w-full p-2 rounded-lg bg-black/30 border border-white/20 text-white"
           />
         </div>

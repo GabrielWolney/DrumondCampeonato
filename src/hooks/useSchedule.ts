@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/Toast";
-
+/* eslint-disable react-hooks/set-state-in-effect */
 export interface ScheduleItem {
   id: string;
   day_number: number;
@@ -14,44 +14,54 @@ export interface ScheduleItem {
   end_time: string;
 }
 
+let cachedSchedule: ScheduleItem[] | null = null;
+
 export function useSchedule() {
   const { showToast } = useToast();
-  const [schedule, setSchedule] = useState<ScheduleItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [schedule, setSchedule] = useState<ScheduleItem[]>(cachedSchedule || []);
+  const [loading, setLoading] = useState(!cachedSchedule);
+  const [error, setError] = useState<string | null>(null);
+  const cancelledRef = useRef(false);
 
-  const fetchSchedule = useCallback(async () => {
+  const fetchSchedule = useCallback(async (force = false) => {
+    if (!force && cachedSchedule) return;
+
     try {
-      const { data, error } = await supabase.from("event_schedule").select("*").order("day_number", { ascending: true });
-      if (error) throw error;
-      setSchedule(data || []);
-    } catch (err) {
-      console.error("Erro ao buscar programação:", err);
-      showToast("Erro ao carregar programação", "error");
+      const { data, error: err } = await supabase
+        .from("event_schedule")
+        .select("*")
+        .order("day_number", { ascending: true });
+
+      if (err) throw new Error(err.message);
+
+      cachedSchedule = data || [];
+      if (!cancelledRef.current) {
+        setSchedule(cachedSchedule);
+      }
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Erro ao carregar programação";
+      showToast(message, "error");
+      if (!cancelledRef.current) {
+        setError(message);
+        setSchedule([]);
+      }
     } finally {
-      setLoading(false);
+      if (!cancelledRef.current) {
+        setLoading(false);
+      }
     }
   }, [showToast]);
 
-  useEffect(() => {
-    let isMounted = true;
-    const load = async () => {
-      try {
-        const { data, error } = await supabase.from("event_schedule").select("*").order("day_number", { ascending: true });
-        if (error) throw error;
-        if (isMounted) {
-          setSchedule(data || []);
-          setLoading(false);
-        }
-      } catch (err) {
-        if (isMounted) {
-          showToast("Erro ao carregar programação", "error");
-          setLoading(false);
-        }
-      }
+        useEffect(() => {
+    cancelledRef.current = false;
+    if (!cachedSchedule) {
+      fetchSchedule();
+    }
+    return () => {
+      cancelledRef.current = true;
     };
-    load();
-    return () => { isMounted = false; };
-  }, [showToast]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const saveSchedule = async (item: Partial<ScheduleItem>) => {
     const scheduleData = {
@@ -70,7 +80,8 @@ export function useSchedule() {
         await supabase.from("event_schedule").insert([scheduleData]);
         showToast("Dia adicionado com sucesso!", "success");
       }
-      await fetchSchedule();
+      cachedSchedule = null;
+      await fetchSchedule(true);
     } catch (err) {
       console.error(err);
       showToast("Erro ao salvar programação", "error");
@@ -81,12 +92,19 @@ export function useSchedule() {
     try {
       await supabase.from("event_schedule").delete().eq("id", id);
       showToast("Dia removido com sucesso!", "success");
-      await fetchSchedule();
+      cachedSchedule = null;
+      await fetchSchedule(true);
     } catch (err) {
       console.error(err);
       showToast("Erro ao remover dia", "error");
     }
   };
 
-  return { schedule, loading, saveSchedule, deleteSchedule, fetchSchedule };
+  const retry = useCallback(() => {
+    setLoading(true);
+    setError(null);
+    fetchSchedule(true);
+  }, [fetchSchedule]);
+
+  return { schedule, loading, error, saveSchedule, deleteSchedule, fetchSchedule: retry, retry };
 }

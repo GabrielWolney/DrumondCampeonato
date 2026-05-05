@@ -14,15 +14,15 @@ export function LotesTab() {
     if (!editing) return;
     setSaving(true);
     try {
-      // Converte price para número antes de salvar
       const payload = {
         ...editing,
         price: editing.price ? Number(editing.price) : 0,
+        highlight: editing.highlight || false,
       };
       await saveTier(payload);
       setEditing(null);
     } catch (err) {
-      // Erro já tratado no hook
+      // Erro tratado no hook
     } finally {
       setSaving(false);
     }
@@ -76,6 +76,15 @@ export function LotesTab() {
                 className="rounded"
               />{" "}
               Ativo
+            </label>
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={editing?.highlight || false}
+                onChange={(e) => setEditing({ ...editing, highlight: e.target.checked })}
+                className="rounded"
+              />{" "}
+              Destacar como mais vendido
             </label>
             <div>
               <label className="block text-xs text-gray-400">Início (desbloqueio)</label>
@@ -149,7 +158,14 @@ export function LotesTab() {
                               ≡
                             </div>
                             <div>
-                              <p className="font-bold text-white">{tier.name}</p>
+                              <p className="font-bold text-white">
+                                {tier.name}
+                                {tier.highlight && (
+                                  <span className="ml-2 text-xs bg-drumond-orange text-black px-2 py-0.5 rounded-full">
+                                    Destaque
+                                  </span>
+                                )}
+                              </p>
                               <p className="text-sm text-drumond-orange">R$ {tier.price}</p>
                               <p className="text-xs text-gray-400">
                                 {tier.unlock_date

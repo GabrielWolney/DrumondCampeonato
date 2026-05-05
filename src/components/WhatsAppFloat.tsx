@@ -1,8 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 import { motion, AnimatePresence } from "framer-motion";
+
+declare global {
+  interface Window {
+    gtag?: (...args: unknown[]) => void;
+  }
+}
 
 interface Config {
   whatsapp_number: string;
@@ -42,18 +48,25 @@ export default function WhatsAppFloat() {
     loadConfig();
   }, []);
 
+  const trackClick = useCallback((action: string, label: string) => {
+    if (typeof window !== "undefined" && window.gtag) {
+      window.gtag("event", action, {
+        event_category: "engagement",
+        event_label: label,
+      });
+    }
+  }, []);
+
   if (!config?.whatsapp_number) return null;
 
   const encodedMessage = encodeURIComponent(config.whatsapp_message);
   const whatsappLink = `https://wa.me/${config.whatsapp_number}?text=${encodedMessage}`;
 
-  // Estilo glass consistente com o restante do site
   const glassStyle =
     "bg-[#101820]/80 backdrop-blur-xl border border-white/10 shadow-[0_12px_40px_-12px_rgba(0,0,0,0.8)]";
 
   return (
     <div className="fixed bottom-6 right-6 z-[9999] flex flex-col items-end gap-2">
-      {/* Card que aparece quando o botão é clicado */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
@@ -63,7 +76,6 @@ export default function WhatsAppFloat() {
             transition={{ duration: 0.2 }}
             className={`${glassStyle} rounded-2xl px-5 py-4 max-w-[220px] relative`}
           >
-            {/* Seta inferior apontando para o botão */}
             <div className="absolute -bottom-2 right-6 w-4 h-4 bg-[#101820]/80 backdrop-blur-xl border-r border-b border-white/10 rotate-45" />
             <p className="text-white text-sm leading-relaxed">
               Falar com a organização
@@ -72,6 +84,7 @@ export default function WhatsAppFloat() {
               href={whatsappLink}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={() => trackClick("click_whatsapp", "float_button")}
               className="mt-3 flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white rounded-full px-4 py-2 text-xs font-bold uppercase tracking-wider transition-colors w-fit"
             >
               <svg
@@ -89,11 +102,15 @@ export default function WhatsAppFloat() {
         )}
       </AnimatePresence>
 
-      {/* Botão flutuante com vidro escuro, sem pulso */}
       <motion.button
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => {
+          setIsOpen(!isOpen);
+          if (!isOpen) {
+            trackClick("click_whatsapp", "open_float");
+          }
+        }}
         className={`${glassStyle} rounded-full p-4 transition-all flex items-center justify-center`}
         aria-label="Abrir WhatsApp"
         aria-expanded={isOpen}

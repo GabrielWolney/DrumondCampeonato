@@ -12,25 +12,33 @@ export interface Sponsor {
   ordem: number;
 }
 
-let cachedSponsors: Sponsor[] | null = null;
+let cache: { data: Sponsor[]; timestamp: number } | null = null;
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutos
 
 export function useSponsors() {
-  const [sponsors, setSponsors] = useState<Sponsor[]>(cachedSponsors || []);
-  const [loading, setLoading] = useState(!cachedSponsors);
+  const [sponsors, setSponsors] = useState<Sponsor[]>(cache?.data || []);
+  const [loading, setLoading] = useState(!cache);
   const [error, setError] = useState<string | null>(null);
   const cancelledRef = useRef(false);
   const fetchStartedRef = useRef(false);
 
   const fetchSponsors = useCallback(async (force = false) => {
-    if (!force && cachedSponsors) {
-      if (!cancelledRef.current) setLoading(false);
+    if (!force && fetchStartedRef.current) return;
+    fetchStartedRef.current = true;
+
+    if (!force && cache && Date.now() - cache.timestamp < CACHE_TTL) {
+      if (!cancelledRef.current) {
+        setSponsors(cache.data);
+        setLoading(false);
+        setError(null);
+      }
       return;
     }
 
-    console.log("[useSponsors] Iniciando fetch...");
+    setLoading(true);
+
     const safeTimeout = setTimeout(() => {
       if (!cancelledRef.current) {
-        console.warn("[useSponsors] Timeout após 10s");
         setLoading(false);
         setError("Tempo limite ao carregar patrocinadores. Verifique sua conexão.");
       }
@@ -46,23 +54,20 @@ export function useSponsors() {
 
       if (err) throw new Error(err.message);
 
-      cachedSponsors = data || [];
+      const items = data || [];
+      cache = { data: items, timestamp: Date.now() };
+
       if (!cancelledRef.current) {
-        console.log("[useSponsors] Dados recebidos:", cachedSponsors.length);
-        setSponsors(cachedSponsors);
+        setSponsors(items);
         setError(null);
+        setLoading(false);
       }
     } catch (err: unknown) {
       clearTimeout(safeTimeout);
       const message = err instanceof Error ? err.message : "Erro ao carregar patrocinadores";
-      console.error("[useSponsors] Erro:", message);
       if (!cancelledRef.current) {
         setError(message);
         setSponsors([]);
-      }
-    } finally {
-      clearTimeout(safeTimeout);
-      if (!cancelledRef.current) {
         setLoading(false);
       }
     }
@@ -70,17 +75,9 @@ export function useSponsors() {
 
   useEffect(() => {
     cancelledRef.current = false;
-    // Evita múltiplos fetches em desenvolvimento (React Strict Mode)
-    if (fetchStartedRef.current) return;
-    fetchStartedRef.current = true;
-
-    if (!cachedSponsors) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (!fetchStartedRef.current) {
       fetchSponsors();
-    } else {
-      setLoading(false);
     }
-
     return () => {
       cancelledRef.current = true;
     };
@@ -108,7 +105,8 @@ export function useSponsors() {
       } else {
         await supabase.from("sponsors").insert([sponsorData]);
       }
-      cachedSponsors = null;
+      cache = null;
+      fetchStartedRef.current = false;
       await fetchSponsors(true);
     } catch (err) {
       console.error(err);
@@ -118,14 +116,14 @@ export function useSponsors() {
 
   const deleteSponsor = async (id: string) => {
     await supabase.from("sponsors").delete().eq("id", id);
-    cachedSponsors = null;
+    cache = null;
+    fetchStartedRef.current = false;
     await fetchSponsors(true);
   };
 
   const retry = useCallback(() => {
-    setLoading(true);
-    setError(null);
-    fetchStartedRef.current = true;
+    fetchStartedRef.current = false;
+    cache = null;
     fetchSponsors(true);
   }, [fetchSponsors]);
 

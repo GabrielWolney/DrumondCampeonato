@@ -96,9 +96,12 @@ function parseConfig(data: { key: string; value: string }[]): Config {
   };
 }
 
+let cache: { data: Config; timestamp: number } | null = null;
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutos
+
 export function useConfig() {
-  const [config, setConfig] = useState<Config>(defaultConfig);
-  const [loading, setLoading] = useState(true);
+  const [config, setConfig] = useState<Config>(cache?.data || defaultConfig);
+  const [loading, setLoading] = useState(!cache);
   const [error, setError] = useState<string | null>(null);
   const cancelledRef = useRef(false);
   const fetchStartedRef = useRef(false);
@@ -106,6 +109,17 @@ export function useConfig() {
   const fetchConfig = useCallback(async (force = false) => {
     if (!force && fetchStartedRef.current) return;
     fetchStartedRef.current = true;
+
+    // Retorna cache se válido
+    if (!force && cache && Date.now() - cache.timestamp < CACHE_TTL) {
+      if (!cancelledRef.current) {
+        setConfig(cache.data);
+        setLoading(false);
+        setError(null);
+      }
+      return;
+    }
+
     setLoading(true);
 
     const safeTimeout = setTimeout(() => {
@@ -122,6 +136,8 @@ export function useConfig() {
       if (err) throw new Error(err.message);
 
       const parsed = parseConfig(data || []);
+      cache = { data: parsed, timestamp: Date.now() };
+
       if (!cancelledRef.current) {
         setConfig(parsed);
         setError(null);
@@ -156,12 +172,15 @@ export function useConfig() {
       supabase.from("site_config").upsert({ key, value }, { onConflict: "key" })
     );
     await Promise.all(updates);
+    // Invalida cache
+    cache = null;
     fetchStartedRef.current = false;
     await fetchConfig(true);
   }, [config, fetchConfig]);
 
   const retry = useCallback(() => {
     fetchStartedRef.current = false;
+    cache = null;
     fetchConfig(true);
   }, [fetchConfig]);
 

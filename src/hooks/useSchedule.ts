@@ -14,26 +14,34 @@ export interface ScheduleItem {
   end_time: string;
 }
 
-let cachedSchedule: ScheduleItem[] | null = null;
+let cache: { data: ScheduleItem[]; timestamp: number } | null = null;
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutos
 
 export function useSchedule() {
   const { showToast } = useToast();
-  const [schedule, setSchedule] = useState<ScheduleItem[]>(cachedSchedule || []);
-  const [loading, setLoading] = useState(!cachedSchedule);
+  const [schedule, setSchedule] = useState<ScheduleItem[]>(cache?.data || []);
+  const [loading, setLoading] = useState(!cache);
   const [error, setError] = useState<string | null>(null);
   const cancelledRef = useRef(false);
   const fetchStartedRef = useRef(false);
 
   const fetchSchedule = useCallback(async (force = false) => {
-    if (!force && cachedSchedule) {
-      if (!cancelledRef.current) setLoading(false);
+    if (!force && fetchStartedRef.current) return;
+    fetchStartedRef.current = true;
+
+    if (!force && cache && Date.now() - cache.timestamp < CACHE_TTL) {
+      if (!cancelledRef.current) {
+        setSchedule(cache.data);
+        setLoading(false);
+        setError(null);
+      }
       return;
     }
 
-    console.log("[useSchedule] Iniciando fetch...");
+    setLoading(true);
+
     const safeTimeout = setTimeout(() => {
       if (!cancelledRef.current) {
-        console.warn("[useSchedule] Timeout após 10s");
         setLoading(false);
         setError("Tempo limite ao carregar programação. Verifique sua conexão.");
       }
@@ -49,24 +57,21 @@ export function useSchedule() {
 
       if (err) throw new Error(err.message);
 
-      cachedSchedule = data || [];
+      const items = data || [];
+      cache = { data: items, timestamp: Date.now() };
+
       if (!cancelledRef.current) {
-        console.log("[useSchedule] Dados recebidos:", cachedSchedule.length);
-        setSchedule(cachedSchedule);
+        setSchedule(items);
         setError(null);
+        setLoading(false);
       }
     } catch (err: unknown) {
       clearTimeout(safeTimeout);
       const message = err instanceof Error ? err.message : "Erro ao carregar programação";
-      console.error("[useSchedule] Erro:", message);
       showToast(message, "error");
       if (!cancelledRef.current) {
         setError(message);
         setSchedule([]);
-      }
-    } finally {
-      clearTimeout(safeTimeout);
-      if (!cancelledRef.current) {
         setLoading(false);
       }
     }
@@ -74,16 +79,9 @@ export function useSchedule() {
 
   useEffect(() => {
     cancelledRef.current = false;
-    if (fetchStartedRef.current) return;
-    fetchStartedRef.current = true;
-
-    if (!cachedSchedule) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (!fetchStartedRef.current) {
       fetchSchedule();
-    } else {
-      setLoading(false);
     }
-
     return () => {
       cancelledRef.current = true;
     };
@@ -106,7 +104,8 @@ export function useSchedule() {
         await supabase.from("event_schedule").insert([scheduleData]);
         showToast("Dia adicionado com sucesso!", "success");
       }
-      cachedSchedule = null;
+      cache = null;
+      fetchStartedRef.current = false;
       await fetchSchedule(true);
     } catch (err) {
       console.error(err);
@@ -118,7 +117,8 @@ export function useSchedule() {
     try {
       await supabase.from("event_schedule").delete().eq("id", id);
       showToast("Dia removido com sucesso!", "success");
-      cachedSchedule = null;
+      cache = null;
+      fetchStartedRef.current = false;
       await fetchSchedule(true);
     } catch (err) {
       console.error(err);
@@ -127,9 +127,8 @@ export function useSchedule() {
   };
 
   const retry = useCallback(() => {
-    setLoading(true);
-    setError(null);
-    fetchStartedRef.current = true;
+    fetchStartedRef.current = false;
+    cache = null;
     fetchSchedule(true);
   }, [fetchSchedule]);
 

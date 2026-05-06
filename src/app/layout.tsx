@@ -114,7 +114,7 @@ export default async function RootLayout({
   const scripts = await getMarketingScripts();
 
   return (
-    <html lang="pt-BR" className={`${oswald.variable} ${openSans.variable} scroll-smooth`} suppressHydrationWarning>
+    <html lang="pt-BR" className={`${oswald.variable} ${openSans.variable} scroll-smooth`} data-scroll-behavior="smooth" suppressHydrationWarning>
       <head>
         <script
           type="application/ld+json"

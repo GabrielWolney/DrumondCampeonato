@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/Toast";
-/* eslint-disable react-hooks/set-state-in-effect */
+
 export interface ScheduleItem {
   id: string;
   day_number: number;
@@ -22,9 +22,22 @@ export function useSchedule() {
   const [loading, setLoading] = useState(!cachedSchedule);
   const [error, setError] = useState<string | null>(null);
   const cancelledRef = useRef(false);
+  const fetchStartedRef = useRef(false);
 
   const fetchSchedule = useCallback(async (force = false) => {
-    if (!force && cachedSchedule) return;
+    if (!force && cachedSchedule) {
+      if (!cancelledRef.current) setLoading(false);
+      return;
+    }
+
+    console.log("[useSchedule] Iniciando fetch...");
+    const safeTimeout = setTimeout(() => {
+      if (!cancelledRef.current) {
+        console.warn("[useSchedule] Timeout após 10s");
+        setLoading(false);
+        setError("Tempo limite ao carregar programação. Verifique sua conexão.");
+      }
+    }, 10000);
 
     try {
       const { data, error: err } = await supabase
@@ -32,36 +45,49 @@ export function useSchedule() {
         .select("*")
         .order("day_number", { ascending: true });
 
+      clearTimeout(safeTimeout);
+
       if (err) throw new Error(err.message);
 
       cachedSchedule = data || [];
       if (!cancelledRef.current) {
+        console.log("[useSchedule] Dados recebidos:", cachedSchedule.length);
         setSchedule(cachedSchedule);
+        setError(null);
       }
     } catch (err: unknown) {
+      clearTimeout(safeTimeout);
       const message = err instanceof Error ? err.message : "Erro ao carregar programação";
+      console.error("[useSchedule] Erro:", message);
       showToast(message, "error");
       if (!cancelledRef.current) {
         setError(message);
         setSchedule([]);
       }
     } finally {
+      clearTimeout(safeTimeout);
       if (!cancelledRef.current) {
         setLoading(false);
       }
     }
   }, [showToast]);
 
-        useEffect(() => {
+  useEffect(() => {
     cancelledRef.current = false;
+    if (fetchStartedRef.current) return;
+    fetchStartedRef.current = true;
+
     if (!cachedSchedule) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       fetchSchedule();
+    } else {
+      setLoading(false);
     }
+
     return () => {
       cancelledRef.current = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [fetchSchedule]);
 
   const saveSchedule = async (item: Partial<ScheduleItem>) => {
     const scheduleData = {
@@ -103,8 +129,9 @@ export function useSchedule() {
   const retry = useCallback(() => {
     setLoading(true);
     setError(null);
+    fetchStartedRef.current = true;
     fetchSchedule(true);
   }, [fetchSchedule]);
 
-  return { schedule, loading, error, saveSchedule, deleteSchedule, fetchSchedule: retry, retry };
+  return { schedule, loading, error, saveSchedule, deleteSchedule, retry };
 }

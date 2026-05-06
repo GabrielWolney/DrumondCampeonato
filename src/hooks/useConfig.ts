@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
@@ -11,7 +10,6 @@ export interface Config {
   register_link: string;
   whatsapp_number: string;
   whatsapp_message: string;
-  // WhatsApp específico para página de patrocinador (fallback para os principais se vazios)
   whatsapp_number_patrocinador: string;
   whatsapp_message_patrocinador: string;
   meta_pixel_id: string;
@@ -45,8 +43,47 @@ export interface Config {
   register_banner_subtext: string;
 }
 
-let cachedConfig: Config | null = null;
-let fetchPromise: Promise<Config> | null = null;
+const defaultConfig: Config = {
+  event_date: "",
+  about_text: "",
+  ticket_link: "",
+  register_link: "",
+  whatsapp_number: "",
+  whatsapp_message: "",
+  whatsapp_number_patrocinador: "",
+  whatsapp_message_patrocinador: "",
+  meta_pixel_id: "",
+  google_analytics_id: "",
+  google_ads_id: "",
+  partner_link: "",
+  instagram_url: "",
+  facebook_url: "",
+  tiktok_url: "",
+  event_location_name: "",
+  event_address: "",
+  maps_link: "",
+  waze_link: "",
+  maps_embed_link: "",
+  hero_title_image: "",
+  hero_title_image_mobile: "",
+  navbar_logo: "",
+  navbar_logo_scrolled: "",
+  section_about_title: "Sobre o Evento",
+  section_schedule_title: "Programação",
+  section_location_title: "Local do Evento",
+  section_sponsors_title: "Patrocinadores",
+  footer_text: "Drumond Sports",
+  footer_subtext: "Brasília . 2026",
+  ingressos_title: "Escolha seu Ingresso",
+  ingressos_description:
+    "Selecione a melhor opção para você e garanta sua vaga no maior evento de sinuca do Brasil.",
+  patrocinador_title: "Seja um Patrocinador",
+  patrocinador_intro:
+    "Posicione sua marca ao lado do maior evento de sinuca do Brasil e conecte-se a um público apaixonado por esporte e entretenimento.",
+  register_banner_enabled: "true",
+  register_banner_text: "Quer jogar o campeonato?",
+  register_banner_subtext: "Garanta sua vaga como atleta e participe da disputa.",
+};
 
 function parseConfig(data: { key: string; value: string }[]): Config {
   const obj: Record<string, string> = {};
@@ -54,129 +91,47 @@ function parseConfig(data: { key: string; value: string }[]): Config {
     obj[item.key] = item.value;
   });
   return {
-    event_date: obj.event_date || "",
-    about_text: obj.about_text || "",
-    ticket_link: obj.ticket_link || "",
-    register_link: obj.register_link || "",
-    whatsapp_number: obj.whatsapp_number || "",
-    whatsapp_message: obj.whatsapp_message || "",
-    whatsapp_number_patrocinador: obj.whatsapp_number_patrocinador || "",
-    whatsapp_message_patrocinador: obj.whatsapp_message_patrocinador || "",
-    meta_pixel_id: obj.meta_pixel_id || "",
-    google_analytics_id: obj.google_analytics_id || "",
-    google_ads_id: obj.google_ads_id || "",
-    partner_link: obj.partner_link || "",
-    instagram_url: obj.instagram_url || "",
-    facebook_url: obj.facebook_url || "",
-    tiktok_url: obj.tiktok_url || "",
-    event_location_name: obj.event_location_name || "",
-    event_address: obj.event_address || "",
-    maps_link: obj.maps_link || "",
-    waze_link: obj.waze_link || "",
-    maps_embed_link: obj.maps_embed_link || "",
-    hero_title_image: obj.hero_title_image || "",
-    hero_title_image_mobile: obj.hero_title_image_mobile || "",
-    navbar_logo: obj.navbar_logo || "",
-    navbar_logo_scrolled: obj.navbar_logo_scrolled || "",
-    section_about_title: obj.section_about_title || "Sobre o Evento",
-    section_schedule_title: obj.section_schedule_title || "Programação",
-    section_location_title: obj.section_location_title || "Local do Evento",
-    section_sponsors_title: obj.section_sponsors_title || "Patrocinadores",
-    footer_text: obj.footer_text || "Drumond Sports",
-    footer_subtext: obj.footer_subtext || "Brasília . 2026",
-    ingressos_title: obj.ingressos_title || "Escolha seu Ingresso",
-    ingressos_description:
-      obj.ingressos_description ||
-      "Selecione a melhor opção para você e garanta sua vaga no maior evento de sinuca do Brasil.",
-    patrocinador_title: obj.patrocinador_title || "Seja um Patrocinador",
-    patrocinador_intro:
-      obj.patrocinador_intro ||
-      "Posicione sua marca ao lado do maior evento de sinuca do Brasil e conecte-se a um público apaixonado por esporte e entretenimento.",
-    register_banner_enabled: obj.register_banner_enabled || "true",
-    register_banner_text: obj.register_banner_text || "Quer jogar o campeonato?",
-    register_banner_subtext:
-      obj.register_banner_subtext || "Garanta sua vaga como atleta e participe da disputa.",
+    ...defaultConfig,
+    ...Object.fromEntries(Object.entries(obj)),
   };
 }
 
 export function useConfig() {
-  const [config, setConfig] = useState<Config>(
-    cachedConfig || {
-      event_date: "",
-      about_text: "",
-      ticket_link: "",
-      register_link: "",
-      whatsapp_number: "",
-      whatsapp_message: "",
-      whatsapp_number_patrocinador: "",
-      whatsapp_message_patrocinador: "",
-      meta_pixel_id: "",
-      google_analytics_id: "",
-      google_ads_id: "",
-      partner_link: "",
-      instagram_url: "",
-      facebook_url: "",
-      tiktok_url: "",
-      event_location_name: "",
-      event_address: "",
-      maps_link: "",
-      waze_link: "",
-      maps_embed_link: "",
-      hero_title_image: "",
-      hero_title_image_mobile: "",
-      navbar_logo: "",
-      navbar_logo_scrolled: "",
-      section_about_title: "Sobre o Evento",
-      section_schedule_title: "Programação",
-      section_location_title: "Local do Evento",
-      section_sponsors_title: "Patrocinadores",
-      footer_text: "Drumond Sports",
-      footer_subtext: "Brasília . 2026",
-      ingressos_title: "Escolha seu Ingresso",
-      ingressos_description:
-        "Selecione a melhor opção para você e garanta sua vaga no maior evento de sinuca do Brasil.",
-      patrocinador_title: "Seja um Patrocinador",
-      patrocinador_intro:
-        "Posicione sua marca ao lado do maior evento de sinuca do Brasil e conecte-se a um público apaixonado por esporte e entretenimento.",
-      register_banner_enabled: "true",
-      register_banner_text: "Quer jogar o campeonato?",
-      register_banner_subtext: "Garanta sua vaga como atleta e participe da disputa.",
-    }
-  );
-  const [loading, setLoading] = useState(!cachedConfig);
+  const [config, setConfig] = useState<Config>(defaultConfig);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const cancelledRef = useRef(false);
+  const fetchStartedRef = useRef(false);
 
   const fetchConfig = useCallback(async (force = false) => {
-    if (!force && cachedConfig) return;
+    if (!force && fetchStartedRef.current) return;
+    fetchStartedRef.current = true;
+    setLoading(true);
 
-    if (!force && fetchPromise) {
-      await fetchPromise;
-      return;
-    }
-
-    const load = async (): Promise<Config> => {
-      const { data, error: err } = await supabase.from("site_config").select("key, value");
-      if (err) throw new Error(err.message);
-      return parseConfig(data || []);
-    };
-
-    fetchPromise = load();
+    const safeTimeout = setTimeout(() => {
+      if (!cancelledRef.current) {
+        setLoading(false);
+        setError("Tempo limite ao carregar configurações. Verifique sua conexão.");
+      }
+    }, 10000);
 
     try {
-      const parsed = await fetchPromise;
-      cachedConfig = parsed;
+      const { data, error: err } = await supabase.from("site_config").select("key, value");
+      clearTimeout(safeTimeout);
+
+      if (err) throw new Error(err.message);
+
+      const parsed = parseConfig(data || []);
       if (!cancelledRef.current) {
         setConfig(parsed);
+        setError(null);
+        setLoading(false);
       }
     } catch (err: unknown) {
+      clearTimeout(safeTimeout);
       const message = err instanceof Error ? err.message : "Erro ao carregar configurações";
       if (!cancelledRef.current) {
         setError(message);
-      }
-    } finally {
-      fetchPromise = null;
-      if (!cancelledRef.current) {
         setLoading(false);
       }
     }
@@ -184,14 +139,13 @@ export function useConfig() {
 
   useEffect(() => {
     cancelledRef.current = false;
-    if (!cachedConfig) {
+    if (!fetchStartedRef.current) {
       fetchConfig();
     }
     return () => {
       cancelledRef.current = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [fetchConfig]);
 
   const updateConfig = useCallback((key: keyof Config, value: string) => {
     setConfig((prev) => ({ ...prev, [key]: value }));
@@ -202,15 +156,14 @@ export function useConfig() {
       supabase.from("site_config").upsert({ key, value }, { onConflict: "key" })
     );
     await Promise.all(updates);
-    cachedConfig = null;
-    fetchPromise = null;
-  }, [config]);
+    fetchStartedRef.current = false;
+    await fetchConfig(true);
+  }, [config, fetchConfig]);
 
   const retry = useCallback(() => {
-    setLoading(true);
-    setError(null);
+    fetchStartedRef.current = false;
     fetchConfig(true);
   }, [fetchConfig]);
 
-  return { config, loading, error, updateConfig, saveConfig, fetchConfig: retry, retry };
+  return { config, loading, error, updateConfig, saveConfig, retry };
 }

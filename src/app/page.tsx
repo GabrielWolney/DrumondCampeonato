@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useCallback } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
@@ -8,72 +8,41 @@ import Countdown from "@/components/Countdown";
 import PhotoCarousel from "@/components/PhotoCarousel";
 import WhatsAppFloat from "@/components/WhatsAppFloat";
 import { Skeleton } from "@/components/ui/Skeleton";
-import { supabase } from "@/lib/supabase";
 import { useConfig } from "@/hooks/useConfig";
+import { useSponsors } from "@/hooks/useSponsors";
+import { useSchedule } from "@/hooks/useSchedule";
 import { FaInstagram, FaFacebook, FaTiktok } from "react-icons/fa";
 
-// Tipagem para o gtag global
 declare global {
   interface Window {
     gtag?: (...args: unknown[]) => void;
   }
 }
 
-interface Sponsor {
-  id: string;
-  name: string;
-  logo_url: string;
-  link: string;
-  ordem: number;
-}
-
-interface ScheduleItem {
-  id: string;
-  day_number: number;
-  date: string;
-  title: string;
-  description: string;
-  start_time: string;
-  end_time: string;
-}
-
 export default function Home() {
-  const [mounted, setMounted] = useState(false);
-  const [sponsors, setSponsors] = useState<Sponsor[]>([]);
-  const [schedule, setSchedule] = useState<ScheduleItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const { config, loading: configLoading } = useConfig();
+  const {
+    config,
+    loading: configLoading,
+    error: configError,
+    retry: retryConfig,
+  } = useConfig();
+  const {
+    sponsors,
+    loading: sponsorsLoading,
+    error: sponsorsError,
+    retry: retrySponsors,
+  } = useSponsors();
+  const {
+    schedule,
+    loading: scheduleLoading,
+    error: scheduleError,
+    retry: retrySchedule,
+  } = useSchedule();
 
-  useEffect(() => {
-    const timer = setTimeout(() => setMounted(true), 0);
-    return () => clearTimeout(timer);
-  }, []);
+  const loading = configLoading || sponsorsLoading || scheduleLoading;
+  const anyError = configError || sponsorsError || scheduleError;
+  const errorMessage = configError || sponsorsError || scheduleError;
 
-  useEffect(() => {
-    async function loadData() {
-      setLoading(true);
-      try {
-        const { data: sponsorsData } = await supabase
-          .from("sponsors")
-          .select("*")
-          .order("ordem", { ascending: true });
-        setSponsors(sponsorsData || []);
-
-        const { data: scheduleData } = await supabase
-          .from("event_schedule")
-          .select("*")
-          .order("day_number", { ascending: true });
-        setSchedule(scheduleData || []);
-      } catch (error) {
-        console.error("Erro ao carregar dados:", error);
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadData();
-  }, []);
-
-  // Função de tracking padronizada
   const trackClick = useCallback((action: string, label: string) => {
     if (typeof window !== "undefined" && window.gtag) {
       window.gtag("event", action, {
@@ -96,6 +65,27 @@ export default function Home() {
   const mapsEmbedLink = config.maps_embed_link || "";
   const registerLink = config.register_link || "#";
 
+  // Tela de erro geral
+  if (anyError && !loading) {
+    return (
+      <div className="w-full min-h-screen flex items-center justify-center bg-[#101820]">
+        <div className="text-center px-4">
+          <p className="text-red-400 mb-4 text-lg">{errorMessage}</p>
+          <button
+            onClick={() => {
+              if (configError) retryConfig();
+              if (sponsorsError) retrySponsors();
+              if (scheduleError) retrySchedule();
+            }}
+            className="bg-drumond-orange text-black px-6 py-3 rounded-full font-bold"
+          >
+            Tentar novamente
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
       <div
@@ -112,40 +102,39 @@ export default function Home() {
 
       <div className="w-full min-h-screen pb-16 md:pb-24 overflow-x-hidden relative z-10 bg-transparent flex flex-col items-center">
         <div className="pt-28 md:pt-44 flex flex-col items-center w-full">
-          
           {/* Hero */}
-<motion.div
-  initial={{ opacity: 0, y: -10 }}
-  animate={{ opacity: 1, y: 0 }}
-  className="flex flex-col items-center mb-6 md:mb-10 text-center px-4"
->
-  {heroImage && (
-    <>
-      {/* Mobile */}
-      <div className="relative w-[400px] h-[120px] mx-auto md:hidden">
-        <Image
-          src={config.hero_title_image_mobile || heroImage}
-          alt="Nacional de Sinuca"
-          fill
-          className="object-contain"
-          sizes="400px"
-          priority
-        />
-      </div>
-      {/* Desktop */}
-      <div className="relative hidden md:block w-[600px] h-[130px] mx-auto">
-        <Image
-          src={heroImage}
-          alt="Nacional de Sinuca"
-          fill
-          className="object-contain"
-          sizes="600px"
-          priority
-        />
-      </div>
-    </>
-  )}
-</motion.div>
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex flex-col items-center mb-6 md:mb-10 text-center px-4"
+          >
+            {heroImage ? (
+              <>
+                <div className="relative w-[400px] h-[120px] mx-auto md:hidden">
+                  <Image
+                    src={config.hero_title_image_mobile || heroImage}
+                    alt="Nacional de Sinuca"
+                    fill
+                    className="object-contain"
+                    sizes="400px"
+                    priority
+                  />
+                </div>
+                <div className="relative hidden md:block w-[600px] h-[130px] mx-auto">
+                  <Image
+                    src={heroImage}
+                    alt="Nacional de Sinuca"
+                    fill
+                    className="object-contain"
+                    sizes="600px"
+                    priority
+                  />
+                </div>
+              </>
+            ) : loading ? (
+              <Skeleton className="w-[400px] h-[120px] md:w-[600px] md:h-[130px] mx-auto" />
+            ) : null}
+          </motion.div>
 
           {/* Countdown */}
           <motion.div
@@ -172,9 +161,9 @@ export default function Home() {
               </div>
               <h2 className="font-display text-xl md:text-3xl text-white mb-3 md:mb-4 flex items-center gap-2">
                 <span className="w-6 md:w-8 h-px bg-drumond-orange/50"></span>
-                {aboutTitle}
+                {loading ? <Skeleton className="h-6 w-48" /> : aboutTitle}
               </h2>
-              {loading || configLoading ? (
+              {loading ? (
                 <div className="space-y-3 pl-3 md:pl-4">
                   <Skeleton className="h-4 w-5/6" />
                   <Skeleton className="h-4 w-4/6" />
@@ -195,11 +184,11 @@ export default function Home() {
           <section className="w-full max-w-5xl px-5 md:px-6 mb-8 md:mb-12">
             <div className="text-center mb-6 md:mb-10">
               <h2 className="font-display text-2xl md:text-3xl text-white uppercase italic tracking-wide">
-                {scheduleTitle}
+                {loading ? <Skeleton className="h-8 w-64 mx-auto" /> : scheduleTitle}
               </h2>
               <div className="w-12 md:w-16 h-[2px] bg-drumond-orange mx-auto mt-2 opacity-50" />
             </div>
-            {loading || configLoading ? (
+            {loading ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5">
                 {[1, 2, 3, 4].map((i) => (
                   <div key={i} className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10">
@@ -253,9 +242,9 @@ export default function Home() {
                   >
                     <path d="M10 2a8 8 0 0 0-8 8c0 6 8 10 8 10s8-4 8-10a8 8 0 0 0-8-8zm0 11a3 3 0 1 1 0-6 3 3 0 0 1 0 6z" />
                   </svg>
-                  {locationTitle.toUpperCase()}
+                  {loading ? <Skeleton className="h-4 w-32" /> : locationTitle.toUpperCase()}
                 </div>
-                {loading || configLoading ? (
+                {loading ? (
                   <Skeleton className="h-8 md:h-10 w-3/4" />
                 ) : (
                   <h2 className="font-display text-2xl md:text-4xl text-white uppercase leading-tight">
@@ -282,7 +271,7 @@ export default function Home() {
                       d="M15 11a3 3 0 1 1-6 0 3 3 0 0 1 6 0z"
                     />
                   </svg>
-                  {loading || configLoading ? (
+                  {loading ? (
                     <Skeleton className="h-4 w-64" />
                   ) : (
                     <p className="text-gray-200 text-sm md:text-base">
@@ -292,7 +281,7 @@ export default function Home() {
                   )}
                 </div>
                 <div className="flex flex-wrap gap-2 md:gap-3 pt-2">
-                  {loading || configLoading ? (
+                  {loading ? (
                     <>
                       <Skeleton className="h-8 w-32 rounded-full" />
                       <Skeleton className="h-8 w-20 rounded-full" />
@@ -378,9 +367,8 @@ export default function Home() {
             </div>
           </section>
 
-          {/* Botões de ação (3 CTAs: Inscrição, Ingressos, Parceiro) */}
+          {/* Botões de ação */}
           <div className="w-full max-w-3xl px-5 md:px-6 mb-6 md:mb-10 flex flex-col sm:flex-row gap-3 md:gap-4 justify-center">
-            {/* Destaque principal: Fazer Inscrição */}
             <a
               href={registerLink}
               target="_blank"
@@ -415,11 +403,11 @@ export default function Home() {
               className="text-center mb-6 md:mb-8"
             >
               <h2 className="font-display text-xl md:text-2xl text-white uppercase italic tracking-wide">
-                {sponsorsTitle}
+                {loading ? <Skeleton className="h-6 w-48 mx-auto" /> : sponsorsTitle}
               </h2>
               <div className="w-12 md:w-16 h-[2px] bg-drumond-orange mx-auto mt-2 opacity-50" />
             </motion.div>
-            {loading || configLoading ? (
+            {loading ? (
               <div className="flex flex-wrap justify-center gap-6 md:gap-8 items-center">
                 {[1, 2, 3, 4].map((i) => (
                   <Skeleton
@@ -456,12 +444,12 @@ export default function Home() {
           {/* Rodapé */}
           <footer className="w-full text-center pb-8 md:pb-12 pt-4 md:pt-6 mt-4 md:mt-6 relative z-10 flex flex-col items-center">
             <div className="w-16 md:w-24 h-px bg-gradient-to-r from-transparent via-drumond-orange/50 to-transparent mb-4 md:mb-6" />
-            <p className="font-display text-xl md:text-2xl text-white/70 italic uppercase tracking-widest">
-              {footerText}
-            </p>
-            <p className="font-body text-[0.5rem] md:text-[0.6rem] tracking-[0.3em] text-drumond-orange uppercase mt-2 font-bold opacity-80">
-              {footerSubtext}
-            </p>
+            <div className="font-display text-xl md:text-2xl text-white/70 italic uppercase tracking-widest">
+              {loading ? <Skeleton className="h-6 w-48 mx-auto" /> : footerText}
+            </div>
+            <div className="font-body text-[0.5rem] md:text-[0.6rem] tracking-[0.3em] text-drumond-orange uppercase mt-2 font-bold opacity-80">
+              {loading ? <Skeleton className="h-3 w-24 mx-auto" /> : footerSubtext}
+            </div>
             <div className="flex gap-4 md:gap-6 mt-4 md:mt-6">
               {config.instagram_url && (
                 <a

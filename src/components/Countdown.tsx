@@ -1,14 +1,16 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useConfig } from "@/hooks/useConfig";
 
 const Separator = () => (
   <div className="w-[1px] h-[30px] bg-white/20 self-center mx-[5px]" />
 );
 
-export default function Countdown() {
-  const { config, loading: configLoading } = useConfig();
+interface CountdownProps {
+  eventDate?: string;
+}
+
+export default function Countdown({ eventDate }: CountdownProps) {
   const [mounted, setMounted] = useState(false);
   const [timeLeft, setTimeLeft] = useState({
     days: 0,
@@ -24,13 +26,13 @@ export default function Countdown() {
   }, []);
 
   useEffect(() => {
-    if (!mounted || configLoading || !config.event_date) return;
+    if (!mounted || !eventDate) return;
 
-    const eventDate = new Date(config.event_date).getTime();
+    const targetDate = new Date(eventDate).getTime();
 
     const updateTimer = () => {
       const now = new Date().getTime();
-      const gap = eventDate - now;
+      const gap = targetDate - now;
 
       if (gap < 0) {
         setTimeLeft((prev) => ({ ...prev, isOver: true }));
@@ -49,9 +51,9 @@ export default function Countdown() {
     updateTimer();
     const timerInterval = setInterval(updateTimer, 1000);
     return () => clearInterval(timerInterval);
-  }, [mounted, configLoading, config.event_date]);
+  }, [mounted, eventDate]);
 
-  if (!mounted || configLoading) {
+  if (!mounted || !eventDate) {
     return <div className="h-[60px] opacity-0" />;
   }
 

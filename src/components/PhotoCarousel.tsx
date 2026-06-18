@@ -1,13 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import { motion, PanInfo } from "framer-motion";
-import { supabase } from "@/lib/supabase";
-import { Skeleton } from "@/components/ui/Skeleton";
 import { useLightbox } from "@/context/LightboxContext";
 
-interface Foto {
+export interface Foto {
   id: string;
   image_url: string;
   ordem: number;
@@ -38,40 +36,15 @@ function CarouselImage({ url, index, isPriority }: { url: string; index: number;
   );
 }
 
-export default function PhotoCarousel() {
-  const [fotos, setFotos] = useState<Foto[]>([]);
-  const [loading, setLoading] = useState(true);
+interface PhotoCarouselProps {
+  fotos: Foto[];
+}
+
+export default function PhotoCarousel({ fotos }: PhotoCarouselProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const { open } = useLightbox();
 
-  useEffect(() => {
-    async function loadFotos() {
-      const { data, error } = await supabase
-        .from("galeria")
-        .select("*")
-        .order("ordem", { ascending: true });
-      if (error) {
-        console.error("Erro ao carregar galeria:", error);
-        setFotos([]);
-      } else {
-        setFotos(data || []);
-      }
-      setLoading(false);
-    }
-    loadFotos();
-  }, []);
-
-  if (loading) {
-    return (
-      <div className="relative w-full max-w-[100vw] overflow-hidden py-10">
-        <div className="relative w-full h-[360px] md:h-[400px] flex items-center justify-center">
-          <Skeleton className="w-[min(65vw,260px)] aspect-[3/4]" />
-        </div>
-      </div>
-    );
-  }
-
-  if (fotos.length === 0) return null;
+  if (!fotos || fotos.length === 0) return null;
 
   const nextSlide = () => setCurrentIndex((prev) => (prev + 1) % fotos.length);
   const prevSlide = () => setCurrentIndex((prev) => (prev - 1 + fotos.length) % fotos.length);

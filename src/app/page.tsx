@@ -1,491 +1,85 @@
-"use client";
+import { supabase } from "@/lib/supabase";
+import HomeClient from "@/components/HomeClient";
+import { Config } from "@/hooks/useConfig";
 
-import { useCallback } from "react";
-import { motion } from "framer-motion";
-import Link from "next/link";
-import Image from "next/image";
-import Countdown from "@/components/Countdown";
-import PhotoCarousel from "@/components/PhotoCarousel";
-import WhatsAppFloat from "@/components/WhatsAppFloat";
-import { Skeleton } from "@/components/ui/Skeleton";
-import { useConfig } from "@/hooks/useConfig";
-import { useSponsors } from "@/hooks/useSponsors";
-import { useSchedule } from "@/hooks/useSchedule";
-import { FaInstagram, FaFacebook, FaTiktok } from "react-icons/fa";
+export const revalidate = 60; // ISR cache for 60 seconds
 
-declare global {
-  interface Window {
-    gtag?: (...args: unknown[]) => void;
+const defaultConfig: Config = {
+  event_date: "",
+  about_text: "",
+  ticket_link: "",
+  register_link: "",
+  whatsapp_number: "",
+  whatsapp_message: "",
+  whatsapp_number_patrocinador: "",
+  whatsapp_message_patrocinador: "",
+  meta_pixel_id: "",
+  google_analytics_id: "",
+  google_ads_id: "",
+  partner_link: "",
+  instagram_url: "",
+  facebook_url: "",
+  tiktok_url: "",
+  event_location_name: "",
+  event_address: "",
+  maps_link: "",
+  waze_link: "",
+  maps_embed_link: "",
+  hero_title_image: "",
+  hero_title_image_mobile: "",
+  navbar_logo: "",
+  navbar_logo_scrolled: "",
+  section_about_title: "Sobre o Evento",
+  section_schedule_title: "Programação",
+  section_location_title: "Local do Evento",
+  section_sponsors_title: "Patrocinadores",
+  footer_text: "Drumond Sports",
+  footer_subtext: "Brasília . 2026",
+  ingressos_title: "Escolha seu Ingresso",
+  ingressos_description:
+    "Selecione a melhor opção para você e garanta sua vaga no maior evento de sinuca do Brasil.",
+  patrocinador_title: "Seja um Patrocinador",
+  patrocinador_intro:
+    "Posicione sua marca ao lado do maior evento de sinuca do Brasil e conecte-se a um público apaixonado por esporte e entretenimento.",
+  register_banner_enabled: "true",
+  register_banner_text: "Quer jogar o campeonato?",
+  register_banner_subtext: "Garanta sua vaga como atleta e participe da disputa.",
+};
+
+function parseConfig(data: { key: string; value: string }[] | null): Config {
+  const obj: Record<string, string> = {};
+  if (data) {
+    data.forEach((item) => {
+      obj[item.key] = item.value;
+    });
   }
+  return {
+    ...defaultConfig,
+    ...Object.fromEntries(Object.entries(obj)),
+  };
 }
 
-export default function Home() {
-  const {
-    config,
-    loading: configLoading,
-    error: configError,
-    retry: retryConfig,
-  } = useConfig();
-  const {
-    sponsors,
-    loading: sponsorsLoading,
-    error: sponsorsError,
-    retry: retrySponsors,
-  } = useSponsors();
-  const {
-    schedule,
-    loading: scheduleLoading,
-    error: scheduleError,
-    retry: retrySchedule,
-  } = useSchedule();
+export default async function Page() {
+  const [
+    { data: configData },
+    { data: sponsors },
+    { data: schedule },
+    { data: fotos }
+  ] = await Promise.all([
+    supabase.from("site_config").select("key, value"),
+    supabase.from("sponsors").select("*").order("ordem", { ascending: true }),
+    supabase.from("event_schedule").select("*").order("date", { ascending: true }).order("start_time", { ascending: true }),
+    supabase.from("galeria").select("*").order("ordem", { ascending: true })
+  ]);
 
-  const loading = configLoading || sponsorsLoading || scheduleLoading;
-  const anyError = configError || sponsorsError || scheduleError;
-  const errorMessage = configError || sponsorsError || scheduleError;
-
-  const trackClick = useCallback((action: string, label: string) => {
-    if (typeof window !== "undefined" && window.gtag) {
-      window.gtag("event", action, {
-        event_category: "engagement",
-        event_label: label,
-      });
-    }
-  }, []);
-
-  const glassStyle =
-    "bg-white/10 backdrop-blur-[12px] border border-white/20 shadow-[0_20px_50px_0_rgba(0,0,0,0.3),inset_1px_1px_2px_0_rgba(255,255,255,0.1)]";
-
-  const heroImage = config.hero_title_image;
-  const aboutTitle = config.section_about_title || "Sobre o Evento";
-  const scheduleTitle = config.section_schedule_title || "Programação";
-  const locationTitle = config.section_location_title || "Local do Evento";
-  const sponsorsTitle = config.section_sponsors_title || "Patrocinadores";
-  const footerText = config.footer_text || "Drumond Sports";
-  const footerSubtext = config.footer_subtext || "Brasília . 2026";
-  const mapsEmbedLink = config.maps_embed_link || "";
-  const registerLink = config.register_link || "#";
-
-  // Tela de erro geral
-  if (anyError && !loading) {
-    return (
-      <div className="w-full min-h-screen flex items-center justify-center bg-[#101820]">
-        <div className="text-center px-4">
-          <p className="text-red-400 mb-4 text-lg">{errorMessage}</p>
-          <button
-            onClick={() => {
-              if (configError) retryConfig();
-              if (sponsorsError) retrySponsors();
-              if (scheduleError) retrySchedule();
-            }}
-            className="bg-drumond-orange text-black px-6 py-3 rounded-full font-bold"
-          >
-            Tentar novamente
-          </button>
-        </div>
-      </div>
-    );
-  }
+  const config = parseConfig(configData);
 
   return (
-    <>
-      <div
-        aria-hidden="true"
-        className="fixed inset-0 z-0 pointer-events-none overflow-hidden"
-      >
-        <div
-          className="absolute inset-0"
-          style={{
-            background: `radial-gradient(ellipse 70% 50% at 10% 10%, rgba(248,141,42,0.08) 0%, transparent 60%), radial-gradient(ellipse 60% 50% at 90% 30%, rgba(255,255,255,0.03) 0%, transparent 60%), radial-gradient(ellipse 50% 60% at 20% 80%, rgba(248,141,42,0.05) 0%, transparent 60%), radial-gradient(ellipse 65% 55% at 85% 85%, rgba(255,255,255,0.02) 0%, transparent 60%), #101820`,
-          }}
-        />
-      </div>
-
-      <div className="w-full min-h-screen pb-16 md:pb-24 overflow-x-hidden relative z-10 bg-transparent flex flex-col items-center">
-        <div className="pt-28 md:pt-44 flex flex-col items-center w-full">
-          {/* Hero */}
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex flex-col items-center mb-6 md:mb-10 text-center px-4"
-          >
-            {heroImage ? (
-              <>
-                <div className="relative w-[400px] h-[120px] mx-auto md:hidden">
-                  <Image
-                    src={config.hero_title_image_mobile || heroImage}
-                    alt="Nacional de Sinuca"
-                    fill
-                    className="object-contain"
-                    sizes="400px"
-                    priority
-                  />
-                </div>
-                <div className="relative hidden md:block w-[600px] h-[130px] mx-auto">
-                  <Image
-                    src={heroImage}
-                    alt="Nacional de Sinuca"
-                    fill
-                    className="object-contain"
-                    sizes="600px"
-                    priority
-                  />
-                </div>
-              </>
-            ) : loading ? (
-              <Skeleton className="w-[400px] h-[120px] md:w-[600px] md:h-[130px] mx-auto" />
-            ) : null}
-          </motion.div>
-
-          {/* Countdown */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className={`${glassStyle} rounded-[40px] px-4 md:px-10 py-4 md:py-6 flex items-center justify-center z-10 relative mb-4 md:mb-6 mx-4`}
-          >
-            <Countdown />
-          </motion.div>
-
-          {/* Carrossel */}
-          <section
-            id="sobre"
-            className="w-full mb-8 md:mb-12 scroll-mt-28 md:scroll-mt-32"
-          >
-            <PhotoCarousel />
-          </section>
-
-          {/* Sobre o Evento */}
-          <section className="w-full max-w-4xl px-5 md:px-6 mb-8 md:mb-12 relative">
-            <div className="relative bg-gradient-to-br from-drumond-orange/5 to-transparent border-l-4 border-drumond-orange rounded-r-2xl md:rounded-r-3xl p-6 md:p-12 shadow-xl">
-              <div className="absolute -top-5 md:-top-6 -left-2 text-6xl md:text-8xl text-drumond-orange/20 font-serif select-none">
-                “
-              </div>
-              <h2 className="font-display text-xl md:text-3xl text-white mb-3 md:mb-4 flex items-center gap-2">
-                <span className="w-6 md:w-8 h-px bg-drumond-orange/50"></span>
-                {loading ? <Skeleton className="h-6 w-48" /> : aboutTitle}
-              </h2>
-              {loading ? (
-                <div className="space-y-3 pl-3 md:pl-4">
-                  <Skeleton className="h-4 w-5/6" />
-                  <Skeleton className="h-4 w-4/6" />
-                  <Skeleton className="h-4 w-3/6" />
-                </div>
-              ) : (
-                <p className="text-gray-200 font-body leading-relaxed text-base md:text-lg italic pl-3 md:pl-4 border-l-2 border-drumond-orange/30">
-                  {config.about_text || "Carregando..."}
-                </p>
-              )}
-              <div className="absolute -bottom-4 right-4 text-6xl md:text-8xl text-drumond-orange/20 font-serif select-none rotate-180">
-                “
-              </div>
-            </div>
-          </section>
-
-          {/* Programação */}
-          <section className="w-full max-w-5xl px-5 md:px-6 mb-8 md:mb-12">
-            <div className="text-center mb-6 md:mb-10">
-              <h2 className="font-display text-2xl md:text-3xl text-white uppercase italic tracking-wide">
-                {loading ? <Skeleton className="h-8 w-64 mx-auto" /> : scheduleTitle}
-              </h2>
-              <div className="w-12 md:w-16 h-[2px] bg-drumond-orange mx-auto mt-2 opacity-50" />
-            </div>
-            {loading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5">
-                {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10">
-                    <Skeleton className="h-4 w-24 mb-2" />
-                    <Skeleton className="h-3 w-16 mb-3" />
-                    <Skeleton className="h-5 w-32 mb-2" />
-                    <Skeleton className="h-4 w-full" />
-                  </div>
-                ))}
-              </div>
-            ) : schedule.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5">
-                {schedule.map((day) => (
-                  <div
-                    key={day.id}
-                    className="group relative bg-white/5 backdrop-blur-sm rounded-2xl overflow-hidden border border-white/10 hover:border-drumond-orange/40 transition-all duration-300 flex flex-col"
-                  >
-                    <div className="absolute left-0 top-4 bottom-4 w-[3px] bg-drumond-orange/60 rounded-r-full" />
-                    <div className="p-5 md:p-6 flex flex-col flex-1">
-                      <p className="text-drumond-orange/80 text-xs font-bold uppercase tracking-widest mb-3">
-                        {new Date(day.date + 'T00:00:00').toLocaleDateString("pt-BR", {
-                          weekday: "short", day: "2-digit", month: "short",
-                        })}
-                      </p>
-                      <h3 className="font-display text-xl md:text-2xl text-white mb-3 leading-tight">
-                        {day.title}
-                      </h3>
-                      <div className="flex items-center gap-2 mb-4 text-gray-400 text-sm">
-                        <span className="w-1.5 h-1.5 rounded-full bg-drumond-orange/80" />
-                        {day.start_time.slice(0, 5)} – {day.end_time.slice(0, 5)}
-                      </div>
-                      <p className="text-gray-300/80 text-sm leading-relaxed flex-1">
-                        {day.description}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : null}
-          </section>
-
-          {/* Local do Evento */}
-          <section className="w-full max-w-5xl px-5 md:px-6 mb-6 md:mb-10">
-            <div className="grid md:grid-cols-2 gap-6 md:gap-8 items-stretch">
-              <div className="space-y-3 md:space-y-4">
-                <div className="inline-flex items-center gap-2 bg-drumond-orange/20 text-drumond-orange px-3 md:px-4 py-1 rounded-full text-xs md:text-sm font-bold uppercase tracking-wider">
-                  <svg
-                    className="w-3 h-3 md:w-4 md:h-4"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path d="M10 2a8 8 0 0 0-8 8c0 6 8 10 8 10s8-4 8-10a8 8 0 0 0-8-8zm0 11a3 3 0 1 1 0-6 3 3 0 0 1 0 6z" />
-                  </svg>
-                  {loading ? <Skeleton className="h-4 w-32" /> : locationTitle.toUpperCase()}
-                </div>
-                {loading ? (
-                  <Skeleton className="h-8 md:h-10 w-3/4" />
-                ) : (
-                  <h2 className="font-display text-2xl md:text-4xl text-white uppercase leading-tight">
-                    {config.event_location_name || "A definir"}
-                  </h2>
-                )}
-                <div className="flex items-start gap-2 text-gray-300">
-                  <svg
-                    className="w-4 h-4 md:w-5 md:h-5 mt-1 text-drumond-orange"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M17.657 16.657L13.414 20.9a2 2 0 0 1-2.827 0l-4.244-4.243a8 8 0 1 1 11.314 0z"
-                    />
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M15 11a3 3 0 1 1-6 0 3 3 0 0 1 6 0z"
-                    />
-                  </svg>
-                  {loading ? (
-                    <Skeleton className="h-4 w-64" />
-                  ) : (
-                    <p className="text-gray-200 text-sm md:text-base">
-                      {config.event_address ||
-                        "Em breve o endereço será divulgado"}
-                    </p>
-                  )}
-                </div>
-                <div className="flex flex-wrap gap-2 md:gap-3 pt-2">
-                  {loading ? (
-                    <>
-                      <Skeleton className="h-8 w-32 rounded-full" />
-                      <Skeleton className="h-8 w-20 rounded-full" />
-                    </>
-                  ) : (
-                    <>
-                      {config.maps_link && (
-                        <a
-                          href={config.maps_link}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-2 border border-drumond-orange/50 hover:bg-drumond-orange/20 transition px-3 md:px-4 py-1.5 md:py-2 rounded-full text-white text-xs md:text-sm font-medium"
-                        >
-                          <svg
-                            className="w-3 h-3 md:w-4 md:h-4 text-[#4285F4]"
-                            fill="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
-                          </svg>
-                          Google Maps
-                        </a>
-                      )}
-                      {config.waze_link && (
-                        <a
-                          href={config.waze_link}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-2 border border-drumond-orange/50 hover:bg-drumond-orange/20 transition px-3 md:px-4 py-1.5 md:py-2 rounded-full text-white text-xs md:text-sm font-medium"
-                        >
-                          <svg
-                            className="w-3 h-3 md:w-4 md:h-4 text-[#33CCFF]"
-                            fill="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" />
-                          </svg>
-                          Waze
-                        </a>
-                      )}
-                    </>
-                  )}
-                </div>
-              </div>
-
-              {mapsEmbedLink ? (
-                <div className="rounded-xl md:rounded-2xl overflow-hidden border border-white/10 h-full min-h-[200px]">
-                  <iframe
-                    src={mapsEmbedLink}
-                    width="100%"
-                    height="100%"
-                    style={{ border: 0, minHeight: "250px" }}
-                    allowFullScreen
-                    loading="lazy"
-                    referrerPolicy="no-referrer-when-downgrade"
-                    title="Local do evento"
-                    className="w-full h-full"
-                  />
-                </div>
-              ) : (
-                <div className="bg-white/5 rounded-xl md:rounded-2xl overflow-hidden border border-white/10 p-4 flex items-center justify-center min-h-[160px] md:min-h-[250px] relative group h-full">
-                  <div className="absolute inset-0 bg-gradient-to-br from-drumond-orange/10 to-transparent"></div>
-                  <div className="relative z-10 text-center">
-                    <svg
-                      className="w-12 h-12 md:w-16 md:h-16 text-drumond-orange/40 mx-auto mb-2"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={1}
-                        d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"
-                      />
-                    </svg>
-                    <p className="text-gray-400 text-xs md:text-sm">
-                      Mapa interativo em breve
-                    </p>
-                  </div>
-                </div>
-              )}
-            </div>
-          </section>
-
-          {/* Botões de ação */}
-          <div className="w-full max-w-3xl px-5 md:px-6 mb-6 md:mb-10 flex flex-col sm:flex-row gap-3 md:gap-4 justify-center">
-            <a
-              href={registerLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={() => trackClick("click_register", "hero_register")}
-              className="bg-drumond-orange text-[#101820] rounded-full py-3 md:py-4 px-6 md:px-8 font-display text-lg md:text-xl uppercase italic shadow-[0_10px_20px_rgba(248,141,42,0.2)] hover:scale-[1.02] transition-transform text-center font-bold"
-            >
-              Fazer Inscrição
-            </a>
-            <Link
-              href="/ingressos"
-              onClick={() => trackClick("click_buy_ticket", "hero_tickets")}
-              className="bg-transparent border border-drumond-orange/70 text-drumond-orange rounded-full py-3 md:py-4 px-6 md:px-8 font-display text-lg md:text-xl uppercase italic hover:bg-drumond-orange/10 transition-colors text-center font-bold"
-            >
-              Ver Ingressos
-            </Link>
-            <Link
-              href="/patrocinador"
-              onClick={() => trackClick("click_partner", "hero_partner")}
-              className="bg-transparent border border-white/30 text-white rounded-full py-3 md:py-4 px-6 md:px-8 font-display text-lg md:text-xl uppercase italic hover:bg-white/10 transition-colors text-center"
-            >
-              Seja um Parceiro
-            </Link>
-          </div>
-
-          {/* Patrocinadores */}
-          <section className="w-full max-w-6xl px-5 md:px-6 mb-14 md:mb-28">
-            <motion.div
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 1 }}
-              viewport={{ once: true }}
-              className="text-center mb-6 md:mb-8"
-            >
-              <h2 className="font-display text-xl md:text-2xl text-white uppercase italic tracking-wide">
-                {loading ? <Skeleton className="h-6 w-48 mx-auto" /> : sponsorsTitle}
-              </h2>
-              <div className="w-12 md:w-16 h-[2px] bg-drumond-orange mx-auto mt-2 opacity-50" />
-            </motion.div>
-            {loading ? (
-              <div className="flex flex-wrap justify-center gap-6 md:gap-8 items-center">
-                {[1, 2, 3, 4].map((i) => (
-                  <Skeleton
-                    key={i}
-                    className="w-24 h-16 md:w-40 md:h-24 rounded-lg"
-                  />
-                ))}
-              </div>
-            ) : sponsors.length > 0 ? (
-              <div className="flex flex-wrap justify-center gap-6 md:gap-8 items-center">
-                {sponsors.map((sponsor) => (
-                  <a
-                    key={sponsor.id}
-                    href={sponsor.link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="block transition hover:scale-105"
-                  >
-                    <div className="relative w-24 h-16 md:w-40 md:h-24 bg-white/5 rounded-lg p-2">
-                      <Image
-                        src={sponsor.logo_url}
-                        alt={sponsor.name}
-                        fill
-                        className="object-contain p-2"
-                        sizes="(max-width: 768px) 96px, 160px"
-                      />
-                    </div>
-                  </a>
-                ))}
-              </div>
-            ) : null}
-          </section>
-
-          {/* Rodapé */}
-          <footer className="w-full text-center pb-8 md:pb-12 pt-4 md:pt-6 mt-4 md:mt-6 relative z-10 flex flex-col items-center">
-            <div className="w-16 md:w-24 h-px bg-gradient-to-r from-transparent via-drumond-orange/50 to-transparent mb-4 md:mb-6" />
-            <div className="font-display text-xl md:text-2xl text-white/70 italic uppercase tracking-widest">
-              {loading ? <Skeleton className="h-6 w-48 mx-auto" /> : footerText}
-            </div>
-            <div className="font-body text-[0.5rem] md:text-[0.6rem] tracking-[0.3em] text-drumond-orange uppercase mt-2 font-bold opacity-80">
-              {loading ? <Skeleton className="h-3 w-24 mx-auto" /> : footerSubtext}
-            </div>
-            <div className="flex gap-4 md:gap-6 mt-4 md:mt-6">
-              {config.instagram_url && (
-                <a
-                  href={config.instagram_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-white/60 hover:text-drumond-orange transition text-xl md:text-2xl"
-                >
-                  <FaInstagram />
-                </a>
-              )}
-              {config.facebook_url && (
-                <a
-                  href={config.facebook_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-white/60 hover:text-drumond-orange transition text-xl md:text-2xl"
-                >
-                  <FaFacebook />
-                </a>
-              )}
-              {config.tiktok_url && (
-                <a
-                  href={config.tiktok_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-white/60 hover:text-drumond-orange transition text-xl md:text-2xl"
-                >
-                  <FaTiktok />
-                </a>
-              )}
-            </div>
-          </footer>
-        </div>
-      </div>
-      <WhatsAppFloat />
-    </>
+    <HomeClient
+      config={config}
+      sponsors={sponsors || []}
+      schedule={schedule || []}
+      fotos={fotos || []}
+    />
   );
 }

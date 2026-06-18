@@ -133,9 +133,18 @@ export default function HomeClient({ config, sponsors, schedule, fotos }: HomeCl
           {/* Carrossel */}
           <section
             id="sobre"
-            className="w-full mb-8 md:mb-12 scroll-mt-28 md:scroll-mt-32"
+            className="w-full mb-8 md:mb-12 scroll-mt-28 md:scroll-mt-32 flex flex-col items-center"
           >
             <PhotoCarousel fotos={fotos} />
+            <a
+              href="https://centraldoseventos.com.br/1-nacional-de-sinuquinha-brasilia"
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => trackClick("click_buy_ticket", "carousel_button")}
+              className="mt-2 bg-drumond-orange text-[#101820] rounded-full py-3 px-8 font-display text-lg uppercase italic font-bold hover:shadow-[0_0_20px_rgba(248,141,42,0.5)] hover:scale-105 transition-all shadow-lg"
+            >
+              Comprar Ingressos
+            </a>
           </section>
 
           {/* Sobre o Evento */}

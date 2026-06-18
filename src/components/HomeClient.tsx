@@ -141,7 +141,7 @@ export default function HomeClient({ config, sponsors, schedule, fotos }: HomeCl
               target="_blank"
               rel="noopener noreferrer"
               onClick={() => trackClick("click_buy_ticket", "carousel_button")}
-              className="mt-2 bg-drumond-orange text-[#101820] rounded-full py-3 px-8 font-display text-lg uppercase italic font-bold hover:shadow-[0_0_20px_rgba(248,141,42,0.5)] hover:scale-105 transition-all shadow-lg"
+              className="-mt-2 md:-mt-4 mb-4 bg-drumond-orange text-[#101820] rounded-full py-3 md:py-4 px-8 md:px-10 font-display text-xl md:text-2xl uppercase italic font-bold hover:shadow-[0_0_20px_rgba(248,141,42,0.5)] hover:scale-105 transition-all shadow-lg text-center"
             >
               Comprar Ingressos
             </a>
@@ -364,27 +364,27 @@ export default function HomeClient({ config, sponsors, schedule, fotos }: HomeCl
           </section>
 
           {/* Botões de ação */}
-          <div className="w-full max-w-3xl px-5 md:px-6 mb-6 md:mb-10 flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="w-full max-w-4xl px-5 md:px-6 mb-6 md:mb-10 flex flex-col sm:flex-row gap-4 justify-center">
             <a
               href={registerLink}
               target="_blank"
               rel="noopener noreferrer"
               onClick={() => trackClick("click_register", "hero_register")}
-              className="bg-drumond-orange text-[#101820] rounded-full py-4 md:py-5 px-8 md:px-10 font-display text-xl md:text-2xl uppercase italic shadow-[0_0_20px_rgba(248,141,42,0.4)] hover:shadow-[0_0_35px_rgba(248,141,42,0.6)] hover:scale-105 transition-all text-center font-bold"
+              className="bg-drumond-orange text-[#101820] rounded-full py-4 md:py-5 px-6 md:px-8 font-display text-lg md:text-xl uppercase italic shadow-[0_0_20px_rgba(248,141,42,0.4)] hover:shadow-[0_0_35px_rgba(248,141,42,0.6)] hover:scale-105 transition-all text-center font-bold flex-1"
             >
               Fazer Inscrição
             </a>
             <Link
               href="/ingressos"
               onClick={() => trackClick("click_buy_ticket", "hero_tickets")}
-              className="bg-transparent border-2 border-drumond-orange text-drumond-orange rounded-full py-4 md:py-5 px-8 md:px-10 font-display text-xl md:text-2xl uppercase italic hover:bg-drumond-orange/10 hover:shadow-[0_0_15px_rgba(248,141,42,0.2)] transition-all text-center font-bold"
+              className="bg-transparent border-2 border-drumond-orange text-drumond-orange rounded-full py-4 md:py-5 px-6 md:px-8 font-display text-lg md:text-xl uppercase italic hover:bg-drumond-orange/10 hover:shadow-[0_0_15px_rgba(248,141,42,0.2)] transition-all text-center font-bold flex-1"
             >
               Ver Ingressos
             </Link>
             <Link
               href="/patrocinador"
               onClick={() => trackClick("click_partner", "hero_partner")}
-              className="bg-transparent border border-white/30 text-white rounded-full py-4 px-6 font-display text-lg uppercase italic hover:bg-white/10 transition-colors text-center self-center"
+              className="bg-transparent border border-white/30 text-white rounded-full py-4 md:py-5 px-6 md:px-8 font-display text-lg md:text-xl uppercase italic hover:bg-white/10 transition-colors text-center flex-1"
             >
               Seja um Parceiro
             </Link>

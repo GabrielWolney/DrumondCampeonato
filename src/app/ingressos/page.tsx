@@ -44,6 +44,7 @@ const defaultConfig: Config = {
   register_banner_enabled: "true",
   register_banner_text: "Quer jogar o campeonato?",
   register_banner_subtext: "Garanta sua vaga como atleta e participe da disputa.",
+  ingressos_em_breve: "false",
 };
 
 function parseConfig(data: { key: string; value: string }[] | null): Config {

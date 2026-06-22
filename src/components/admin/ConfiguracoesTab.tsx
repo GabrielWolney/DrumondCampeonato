@@ -307,6 +307,16 @@ export function ConfiguracoesTab() {
             placeholder="https://..."
           />
         </div>
+        <div>
+          <label className="block text-sm font-bold text-gray-300">Link do Botão &quot;Ver Ingressos&quot;</label>
+          <input
+            type="text"
+            value={config.ticket_link}
+            onChange={(e) => handleChange("ticket_link", e.target.value)}
+            className="w-full p-2 rounded-lg bg-black/30 border border-white/20 text-white"
+            placeholder="Vazio para ir à aba interna, ou https://..."
+          />
+        </div>
         <div className="md:col-span-2">
           <hr className="border-white/20 my-4" />
           <h3 className="text-lg font-display text-white mb-4">Rodapé</h3>

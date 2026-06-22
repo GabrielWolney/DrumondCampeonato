@@ -8,7 +8,7 @@ interface AdminGuardProps {
 }
 
 export function AdminGuard({ children }: AdminGuardProps) {
-  const { user, loading, isAdmin, login } = useAuth();
+  const { user, loading, isAdmin, login, logout } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
@@ -60,7 +60,13 @@ export function AdminGuard({ children }: AdminGuardProps) {
       <div className="min-h-screen flex items-center justify-center bg-[#101820] p-6">
         <div className="text-white text-center">
           <h2 className="text-2xl font-display mb-4">Acesso negado</h2>
-          <p>Você não tem permissão para acessar esta área.</p>
+          <p className="mb-6">Você não tem permissão para acessar esta área.</p>
+          <button
+            onClick={() => logout()}
+            className="bg-red-600/80 hover:bg-red-700 text-white px-6 py-2 rounded-full font-bold transition-all"
+          >
+            Sair e tentar com outra conta
+          </button>
         </div>
       </div>
     );

@@ -125,7 +125,7 @@ export default function HomeClient({ config, sponsors, schedule, fotos }: HomeCl
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className={`${glassStyle} rounded-[40px] px-4 md:px-10 py-4 md:py-6 flex items-center justify-center z-10 relative mb-4 md:mb-6 mx-4`}
+            className={`${glassStyle} rounded-[40px] px-4 md:px-10 py-4 md:py-6 flex items-center justify-center z-10 relative mb-0 md:mb-2 mx-4`}
           >
             <Countdown eventDate={config.event_date} />
           </motion.div>
@@ -133,18 +133,20 @@ export default function HomeClient({ config, sponsors, schedule, fotos }: HomeCl
           {/* Carrossel */}
           <section
             id="sobre"
-            className="w-full mb-8 md:mb-12 scroll-mt-28 md:scroll-mt-32 flex flex-col items-center"
+            className="w-full mb-8 md:mb-12 scroll-mt-28 md:scroll-mt-32"
           >
             <PhotoCarousel fotos={fotos} />
-            <a
-              href="https://centraldoseventos.com.br/1-nacional-de-sinuquinha-brasilia"
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={() => trackClick("click_buy_ticket", "carousel_button")}
-              className="-mt-2 md:-mt-4 mb-4 bg-drumond-orange text-[#101820] rounded-full py-3 md:py-4 px-8 md:px-10 font-display text-xl md:text-2xl uppercase italic font-bold hover:shadow-[0_0_20px_rgba(248,141,42,0.5)] hover:scale-105 transition-all shadow-lg text-center"
-            >
-              Comprar Ingressos
-            </a>
+            <div className="w-full max-w-3xl mx-auto px-5 mt-2 md:mt-4 flex flex-col sm:flex-row justify-center">
+              <Link
+                href={config.ticket_link || "/ingressos"}
+                target={config.ticket_link?.startsWith("http") ? "_blank" : undefined}
+                rel={config.ticket_link?.startsWith("http") ? "noopener noreferrer" : undefined}
+                onClick={() => trackClick("click_buy_ticket", "carousel_tickets")}
+                className="bg-transparent border-2 border-drumond-orange text-drumond-orange rounded-full py-4 md:py-5 px-8 md:px-10 font-display text-xl md:text-2xl uppercase italic hover:bg-drumond-orange/10 hover:shadow-[0_0_15px_rgba(248,141,42,0.2)] transition-all text-center font-bold w-full sm:w-auto"
+              >
+                Ver Ingressos
+              </Link>
+            </div>
           </section>
 
           {/* Sobre o Evento */}
@@ -364,27 +366,20 @@ export default function HomeClient({ config, sponsors, schedule, fotos }: HomeCl
           </section>
 
           {/* Botões de ação */}
-          <div className="w-full max-w-4xl px-5 md:px-6 mb-6 md:mb-10 flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="w-full max-w-3xl px-5 md:px-6 mb-6 md:mb-10 flex flex-col sm:flex-row gap-4 justify-center">
             <a
               href={registerLink}
               target="_blank"
               rel="noopener noreferrer"
               onClick={() => trackClick("click_register", "hero_register")}
-              className="bg-drumond-orange text-[#101820] rounded-full py-4 md:py-5 px-6 md:px-8 font-display text-lg md:text-xl uppercase italic shadow-[0_0_20px_rgba(248,141,42,0.4)] hover:shadow-[0_0_35px_rgba(248,141,42,0.6)] hover:scale-105 transition-all text-center font-bold flex-1"
+              className="bg-drumond-orange text-[#101820] rounded-full py-4 md:py-5 px-8 md:px-10 font-display text-xl md:text-2xl uppercase italic shadow-[0_0_20px_rgba(248,141,42,0.4)] hover:shadow-[0_0_35px_rgba(248,141,42,0.6)] hover:scale-105 transition-all text-center font-bold"
             >
               Fazer Inscrição
             </a>
             <Link
-              href="/ingressos"
-              onClick={() => trackClick("click_buy_ticket", "hero_tickets")}
-              className="bg-transparent border-2 border-drumond-orange text-drumond-orange rounded-full py-4 md:py-5 px-6 md:px-8 font-display text-lg md:text-xl uppercase italic hover:bg-drumond-orange/10 hover:shadow-[0_0_15px_rgba(248,141,42,0.2)] transition-all text-center font-bold flex-1"
-            >
-              Ver Ingressos
-            </Link>
-            <Link
               href="/patrocinador"
               onClick={() => trackClick("click_partner", "hero_partner")}
-              className="bg-transparent border border-white/30 text-white rounded-full py-4 md:py-5 px-6 md:px-8 font-display text-lg md:text-xl uppercase italic hover:bg-white/10 transition-colors text-center flex-1"
+              className="bg-transparent border border-white/30 text-white rounded-full py-4 md:py-5 px-8 md:px-10 font-display text-xl md:text-2xl uppercase italic hover:bg-white/10 transition-colors text-center"
             >
               Seja um Parceiro
             </Link>

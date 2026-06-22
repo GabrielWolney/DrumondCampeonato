@@ -65,7 +65,7 @@ export default function PhotoCarousel({ fotos }: PhotoCarouselProps) {
   };
 
   return (
-    <div className="relative w-full max-w-[100vw] overflow-hidden group py-10">
+    <div className="relative w-full max-w-[100vw] overflow-hidden group py-4 md:py-6">
       <div
         className="relative w-full h-[360px] md:h-[400px] flex items-center justify-center"
         style={{ perspective: "1000px" }}

@@ -282,6 +282,17 @@ export function ConfiguracoesTab() {
           <h3 className="text-lg font-display text-white mb-4">Páginas Específicas</h3>
         </div>
         <div>
+          <label className="block text-sm font-bold text-gray-300">Modo &quot;Em Breve&quot; (Oculta lotes)</label>
+          <select
+            value={config.ingressos_em_breve}
+            onChange={(e) => handleChange("ingressos_em_breve", e.target.value)}
+            className="w-full p-2 rounded-lg bg-black/30 border border-white/20 text-white"
+          >
+            <option value="true">Sim (Mostrar Em Breve)</option>
+            <option value="false">Não (Vendas Abertas)</option>
+          </select>
+        </div>
+        <div>
           <label className="block text-sm font-bold text-gray-300">Título Página Ingressos</label>
           <input type="text" value={config.ingressos_title} onChange={(e) => handleChange("ingressos_title", e.target.value)} className="w-full p-2 rounded-lg bg-black/30 border border-white/20 text-white" />
         </div>

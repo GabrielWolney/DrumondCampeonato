@@ -41,6 +41,7 @@ export interface Config {
   register_banner_enabled: string;
   register_banner_text: string;
   register_banner_subtext: string;
+  ingressos_em_breve: string;
 }
 
 const defaultConfig: Config = {
@@ -83,6 +84,7 @@ const defaultConfig: Config = {
   register_banner_enabled: "true",
   register_banner_text: "Quer jogar o campeonato?",
   register_banner_subtext: "Garanta sua vaga como atleta e participe da disputa.",
+  ingressos_em_breve: "false",
 };
 
 function parseConfig(data: { key: string; value: string }[]): Config {

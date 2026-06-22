@@ -14,6 +14,7 @@ declare global {
   interface Window {
     gtag?: (...args: unknown[]) => void;
     fbq?: (...args: unknown[]) => void;
+    dataLayer?: any[];
   }
 }
 
@@ -54,6 +55,12 @@ export default function HomeClient({ config, sponsors, schedule, fotos }: HomeCl
       if (window.fbq && (action === "click_buy_ticket" || action === "click_register")) {
         window.fbq("track", "InitiateCheckout");
       }
+      window.dataLayer = window.dataLayer || [];
+      window.dataLayer.push({
+        event: action,
+        event_category: "engagement",
+        event_label: label,
+      });
     }
   }, []);
 
@@ -138,13 +145,21 @@ export default function HomeClient({ config, sponsors, schedule, fotos }: HomeCl
             <PhotoCarousel fotos={fotos} />
             <div className="w-full max-w-3xl mx-auto px-5 mt-2 md:mt-4 flex flex-col sm:flex-row justify-center">
               <Link
-                href={config.ticket_link || "/ingressos"}
-                target={config.ticket_link?.startsWith("http") ? "_blank" : undefined}
-                rel={config.ticket_link?.startsWith("http") ? "noopener noreferrer" : undefined}
-                onClick={() => trackClick("click_buy_ticket", "carousel_tickets")}
-                className="bg-transparent border-2 border-drumond-orange text-drumond-orange rounded-full py-4 md:py-5 px-8 md:px-10 font-display text-xl md:text-2xl uppercase italic hover:bg-drumond-orange/10 hover:shadow-[0_0_15px_rgba(248,141,42,0.2)] transition-all text-center font-bold w-full sm:w-auto"
+                href={config.ingressos_em_breve === "true" ? "/ingressos" : (config.ticket_link || "/ingressos")}
+                target={config.ingressos_em_breve !== "true" && config.ticket_link?.startsWith("http") ? "_blank" : undefined}
+                rel={config.ingressos_em_breve !== "true" && config.ticket_link?.startsWith("http") ? "noopener noreferrer" : undefined}
+                onClick={() => {
+                  if (config.ingressos_em_breve !== "true") {
+                     trackClick("click_buy_ticket", "carousel_tickets");
+                  }
+                }}
+                className={`bg-transparent border-2 border-drumond-orange text-drumond-orange rounded-full py-4 md:py-5 px-8 md:px-10 font-display text-xl md:text-2xl uppercase italic text-center font-bold w-full sm:w-auto transition-all ${
+                  config.ingressos_em_breve === "true" 
+                  ? "opacity-70 hover:bg-drumond-orange/5" 
+                  : "hover:bg-drumond-orange/10 hover:shadow-[0_0_15px_rgba(248,141,42,0.2)]"
+                }`}
               >
-                Ver Ingressos
+                {config.ingressos_em_breve === "true" ? "Ingressos (Em breve)" : "Ver Ingressos"}
               </Link>
             </div>
           </section>

@@ -145,6 +145,7 @@ export default function IngressosClient({ config, tiers }: IngressosClientProps)
                   href={registerLink}
                   target="_blank"
                   rel="noopener noreferrer"
+                  id="button-jogador"
                   onClick={() => trackClick("click_register", "ingressos_banner")}
                   className="shrink-0 bg-drumond-orange text-[#101820] rounded-full py-3 px-8 font-display text-lg uppercase italic font-bold hover:shadow-[0_0_20px_rgba(248,141,42,0.5)] hover:scale-105 transition-all shadow-lg"
                 >
@@ -231,6 +232,7 @@ export default function IngressosClient({ config, tiers }: IngressosClientProps)
                                   href={tier.purchase_link}
                                   target="_blank"
                                   rel="noopener noreferrer"
+                                  id="button-ingresso"
                                   onClick={() => {
                                     trackClick("click_buy_ticket", tier.name);
                                   }}

@@ -148,6 +148,7 @@ export default function HomeClient({ config, sponsors, schedule, fotos }: HomeCl
                 href={config.ingressos_em_breve === "true" ? "/ingressos" : (config.ticket_link || "/ingressos")}
                 target={config.ingressos_em_breve !== "true" && config.ticket_link?.startsWith("http") ? "_blank" : undefined}
                 rel={config.ingressos_em_breve !== "true" && config.ticket_link?.startsWith("http") ? "noopener noreferrer" : undefined}
+                id="button-ingresso"
                 onClick={() => {
                   if (config.ingressos_em_breve !== "true") {
                      trackClick("click_buy_ticket", "carousel_tickets");
@@ -386,6 +387,7 @@ export default function HomeClient({ config, sponsors, schedule, fotos }: HomeCl
               href={registerLink}
               target="_blank"
               rel="noopener noreferrer"
+              id="button-jogador"
               onClick={() => trackClick("click_register", "hero_register")}
               className="bg-drumond-orange text-[#101820] rounded-full py-4 md:py-5 px-8 md:px-10 font-display text-xl md:text-2xl uppercase italic shadow-[0_0_20px_rgba(248,141,42,0.4)] hover:shadow-[0_0_35px_rgba(248,141,42,0.6)] hover:scale-105 transition-all text-center font-bold"
             >
